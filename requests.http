@@ -1,0 +1,31 @@
+GET {{base_url}}/users
+Accept: application/json
+
+###
+
+POST {{base_url}}/users
+Content-Type: application/json
+Accept: application/json
+
+{
+  "username": "mrhanky",
+  "email": "mrhanky@unterschicht.tv",
+  "password": "sup3rs3cr3t",
+  "password_confirm": "sup3rs3cr3t"
+}
+
+###
+
+GET {{base_url}}/users/mrhanky
+Accept: application/json
+
+###
+
+PATCH {{base_url}}/users/mrhanky
+Accept: application/json
+
+###
+
+DELETE {{base_url}}/users/mrhanky
+
+###
