@@ -1,43 +1,40 @@
 package main
 
 import (
-	"fmt"
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
-	"github.com/jannis-a/go-durak/database"
-	"github.com/jannis-a/go-durak/handlers"
-	"github.com/jannis-a/go-durak/models"
-	"github.com/spf13/viper"
 	"log"
 	"net/http"
+
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
+
+	"github.com/jannis-a/go-durak/config"
+	"github.com/jannis-a/go-durak/user"
 )
 
+func Routes(c *config.Config) *chi.Mux {
+	router := chi.NewRouter()
+	router.Use(
+		middleware.Logger,
+		middleware.Recoverer,
+	)
+
+	router.Route("/v1", func(r chi.Router) {
+		r.Mount("/users", user.Routes(c))
+	})
+
+	return router
+}
+
 func main() {
-	viper.AddConfigPath(".")
-	if err := viper.ReadInConfig(); err != nil {
-		panic(fmt.Errorf("error reading config: %s\n", err))
+	configuration, err := config.New()
+	if err != nil {
+		log.Panicln("Configuration error", err)
 	}
 
-	db := database.Open()
-	defer db.Close()
-	db.AutoMigrate(&models.User{})
+	defer configuration.Db.Close()
 
-	app := handlers.NewApp(db)
+	router := Routes(configuration)
 
-	router := chi.NewRouter()
-	router.Use(middleware.Logger, middleware.Recoverer)
-
-	router.Route("/users", func(r chi.Router) {
-		r.Get("/", app.UserList)
-		r.Post("/", app.UserCreate)
-
-		r.Route("/{username}", func(r chi.Router) {
-			r.Get("/", app.UserDetail)
-			r.Patch("/", app.UserUpdate)
-			r.Delete("/", app.UserDelete)
-		})
-	})
-	addr := fmt.Sprintf("%s:%d", viper.GetString("HOST"), viper.GetInt("PORT"))
-	log.Printf("listening on http://%s", addr)
-	log.Fatal(http.ListenAndServe(addr, router))
+	log.Println("listening on:", configuration.Constants.PORT)
+	log.Fatal(http.ListenAndServe(":"+configuration.Constants.PORT, router))
 }
