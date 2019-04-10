@@ -1,0 +1,203 @@
+openapi: 3.0.1
+
+info:
+  title: Durak API
+  version: 0.1.0
+
+externalDocs:
+  description: Find out more about Swagger
+  url: http://swagger.io
+
+servers:
+  - url: http://api.durak.tld/v1
+
+tags:
+  - name: auth
+  - name: user
+
+paths:
+  /login:
+    post:
+      tags:
+        - auth
+      summary: Logs user into the system
+      operationId: loginUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              required:
+                - password
+                - username
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                  format: password
+        required: false
+      responses:
+        200:
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                type: string
+                description: The authentication token.
+
+  /logout:
+    get:
+      tags:
+        - auth
+      summary: Logs out current logged in user session
+      operationId: logoutUser
+      responses:
+        default:
+          description: Successful operation
+          content: {}
+      security:
+        - ApiKeyAuth: []
+
+  /user:
+    post:
+      tags:
+        - user
+      summary: Create user
+      description: This can only be done by a logged out user.
+      operationId: createUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+        required: false
+      responses:
+        200:
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSelf'
+        default:
+          description: successful operation
+          content: {}
+
+  /user/{username}:
+    parameters:
+      - $ref: '#/components/parameters/usernameParam'
+
+    get:
+      tags:
+        - user
+      summary: Get user by user name
+      operationId: getUserByName
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        400:
+          description: Invalid username supplied
+          content: {}
+        404:
+          description: User not found
+          content: {}
+      security:
+        - ApiKeyAuth: []
+    patch:
+      tags:
+        - user
+      summary: Updated user
+      description: This can only be done by the logged in user.
+      operationId: updateUser
+      requestBody:
+        description: Updated user object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      responses:
+        400:
+          description: Invalid user supplied
+          content: {}
+        404:
+          description: User not found
+          content: {}
+      security:
+        - ApiKeyAuth: []
+    delete:
+      tags:
+        - user
+      summary: Delete user
+      description: This can only be done by the logged in user.
+      operationId: deleteUser
+      responses:
+        400:
+          description: Invalid username supplied
+          content: {}
+        404:
+          description: User not found
+          content: {}
+      security:
+        - ApiKeyAuth: []
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        username:
+          type: string
+        joined_at:
+          type: string
+          format: date-time
+
+    UserSelf:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          properties:
+            email:
+              type: string
+              format: email
+            updated_at:
+              type: string
+              format: date-time
+              nullable: true
+
+    UserCreate:
+      required:
+        - email
+        - password
+        - username
+      type: object
+      properties:
+        username:
+          maxLength: 50
+          minLength: 3
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+  parameters:
+    usernameParam:
+      name: username
+      in: path
+      description: The name that needs to be fetched.
+      required: true
+      schema:
+        type: string
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      name: Authorization
+      in: header
