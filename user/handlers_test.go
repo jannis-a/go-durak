@@ -32,12 +32,8 @@ func TestMain(m *testing.M) {
 func TestListHandler(t *testing.T) {
 	u := NewUser(c.Db, randomdata.SillyName(), randomdata.Email(), "secret")
 
-	json := `[{"username":"%s","email":"%s","joined_at":"%s","updated_at":"%s"}]` + "\n"
-	expected := fmt.Sprintf(json,
-		u.Username,
-		u.Email,
-		u.JoinedAt.Format(time.RFC3339Nano),
-		u.UpdatedAt.Value.Format(time.RFC3339Nano))
+	json := `[{"username":"%s","email":"%s","joined_at":"%s"}]` + "\n"
+	expected := fmt.Sprintf(json, u.Username, u.Email, u.JoinedAt.Format(time.RFC3339Nano))
 
 	req, err := http.NewRequest("GET", "/v1/users", nil)
 	assert.NoError(t, err)
