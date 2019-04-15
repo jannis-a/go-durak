@@ -1,28 +1,34 @@
 package user
 
 import (
-	"log"
 	"net/http"
 	"net/url"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
-	"github.com/raja/argon2pw"
 	"github.com/thedevsaddam/govalidator"
 
-	"github.com/jannis-a/go-durak/config"
+	"github.com/jannis-a/go-durak/app"
 )
 
-func ListHandler(c *config.Config) http.HandlerFunc {
+func ListHandler(c *app.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var users []User
-		c.Db.Find(&users)
+
+		rows, _ := c.Db.Queryx(`SELECT * FROM users`)
+		for rows.Next() {
+			var u User
+			err := rows.StructScan(&u)
+			if err == nil {
+				users = append(users, u)
+			}
+		}
 
 		render.JSON(w, r, users)
 	}
 }
 
-func CreateHandler(c *config.Config) http.HandlerFunc {
+func CreateHandler(c *app.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		d := make(map[string]string)
 		v := govalidator.New(govalidator.Options{
@@ -43,15 +49,15 @@ func CreateHandler(c *config.Config) http.HandlerFunc {
 		}
 
 		var count int
-		var user User
+		// var user User
 
-		c.Db.Model(&user).Where("username = ?", d["username"]).Count(&count)
-		if 0 < count {
+		row := c.Db.QueryRow(`SELECT * FROM users WHERE username = ?`, d["username"])
+		if _ = row.Scan(count); 0 < count {
 			e.Add("username", "USERNAME ALREADY TAKEN")
 		}
 
-		c.Db.Model(&user).Where("email = ?", d["email"]).Count(&count)
-		if 0 < count {
+		row = c.Db.QueryRow(`SELECT * FROM users WHERE email = ?`, d["email"])
+		if _ = row.Scan(count); 0 < count {
 			e.Add("email", "EMAIL ALREADY TAKEN")
 		}
 
@@ -61,31 +67,22 @@ func CreateHandler(c *config.Config) http.HandlerFunc {
 			return
 		}
 
-		hashedPassword, err := argon2pw.GenerateSaltedHash(d["password"])
-		if err != nil {
-			log.Panicf("Hash generated returned error: %v", err)
-		}
-
-		user = User{
-			Username: d["username"],
-			Email:    d["email"],
-			Password: hashedPassword,
-		}
-		c.Db.Create(&user)
+		user := NewUser(c.Db, d["username"], d["email"], d["password"])
 
 		render.Status(r, http.StatusCreated)
 		render.JSON(w, r, user)
 	}
 }
 
-func DetailHandler(c *config.Config) http.HandlerFunc {
+func DetailHandler(c *app.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		username := chi.URLParam(r, "username")
 
 		var user User
-		result := c.Db.Where("username = ?", username).First(&user)
+		row := c.Db.QueryRowx(`SELECT * FROM users WHERE username = $1`, username)
+		_ = row.StructScan(&user)
 
-		if 0 == result.RowsAffected {
+		if &user == nil {
 			render.Status(r, http.StatusNotFound)
 			render.PlainText(w, r, "")
 		} else {
@@ -94,18 +91,16 @@ func DetailHandler(c *config.Config) http.HandlerFunc {
 	}
 }
 
-func UpdateHandler(c *config.Config) http.HandlerFunc {
+func UpdateHandler(c *app.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {}
 }
 
-func DeleteHandler(c *config.Config) http.HandlerFunc {
+func DeleteHandler(c *app.App) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		username := chi.URLParam(r, "username")
 
-		var user User
-		result := c.Db.Where("username = ?", username).Delete(&user)
-
-		if 0 == result.RowsAffected {
+		result, _ := c.Db.Exec(`DELETE FROM users WHERE username = $1`, username)
+		if rows, _ := result.RowsAffected(); rows == 0 {
 			render.Status(r, http.StatusNotFound)
 			render.PlainText(w, r, "")
 		} else {

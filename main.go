@@ -7,11 +7,11 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 
-	"github.com/jannis-a/go-durak/config"
+	"github.com/jannis-a/go-durak/app"
 	"github.com/jannis-a/go-durak/user"
 )
 
-func Routes(c *config.Config) *chi.Mux {
+func Routes(c *app.App) *chi.Mux {
 	router := chi.NewRouter()
 	router.Use(
 		middleware.Logger,
@@ -26,15 +26,13 @@ func Routes(c *config.Config) *chi.Mux {
 }
 
 func main() {
-	configuration, err := config.New()
+	app, err := app.New()
 	if err != nil {
 		log.Panicln("Configuration error", err)
 	}
 
-	defer configuration.Db.Close()
+	router := Routes(app)
 
-	router := Routes(configuration)
-
-	log.Println("listening on:", configuration.Constants.PORT)
-	log.Fatal(http.ListenAndServe(":"+configuration.Constants.PORT, router))
+	log.Println("listening on:", app.Config.PORT)
+	log.Fatal(http.ListenAndServe(":"+app.Config.PORT, router))
 }
