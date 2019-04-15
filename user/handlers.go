@@ -70,7 +70,6 @@ func CreateHandler(c *config.Config) http.HandlerFunc {
 			Username: d["username"],
 			Email:    d["email"],
 			Password: hashedPassword,
-			Token:    generateToken(c.Db),
 		}
 		c.Db.Create(&user)
 
