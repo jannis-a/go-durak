@@ -11,61 +11,77 @@ externalDocs:
 servers:
   - url: http://api.durak.tld/v1
 
-tags:
-  - name: auth
-  - name: user
-
 paths:
-  /login:
+  /auth/login:
     post:
-      tags:
-        - auth
       summary: Logs user into the system
       operationId: loginUser
+      tags:
+        - auth
       requestBody:
         content:
           application/json:
             schema:
-              required:
-                - password
-                - username
-              type: object
-              properties:
-                username:
-                  type: string
-                password:
-                  type: string
-                  format: password
-        required: false
+              $ref: '#/components/schemas/Credentials'
+        required: true
       responses:
         200:
-          description: Successful login
+          description: Login successful.
           content:
             application/json:
               schema:
-                type: string
-                description: The authentication token.
+                $ref: '#/components/schemas/AccessToken'
+        401:
+          description: Invalid credentials.
 
-  /logout:
-    get:
+  /auth/refresh:
+    post:
+      summary: Get a new access token
+      operationId: tokenRefresh
       tags:
         - auth
-      summary: Logs out current logged in user session
-      operationId: logoutUser
-      responses:
-        default:
-          description: Successful operation
-          content: {}
       security:
         - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CookieRefreshToken'
+      responses:
+        200:
+          description: Refresh successful.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessToken'
+        401:
+          description: Invalid token.
 
-  /user:
+  /auth/logout:
     post:
+      summary: Logs user out the system
+      operationId: logoutUser
       tags:
-        - user
+        - auth
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CookieRefreshToken'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessToken'
+      responses:
+        200:
+          description: Logout successful.
+        401:
+          description: Invalid token.
+
+  /users:
+    post:
       summary: Create user
       description: This can only be done by a logged out user.
       operationId: createUser
+      tags:
+        - users
       requestBody:
         content:
           application/json:
@@ -73,25 +89,74 @@ paths:
               $ref: '#/components/schemas/UserCreate'
         required: false
       responses:
-        200:
-          description: Successful login
+        201:
+          description: Own user created.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserSelf'
-        default:
-          description: successful operation
-          content: {}
 
-  /user/{username}:
+  /users/me:
+    get:
+      summary: Retrieve own user
+      description: This can only be done by a logged in user.
+      operationId: getUser
+      tags:
+        - users
+      security:
+        - ApiKeyAuth: []
+      responses:
+        200:
+          description: Own user retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSelf'
+
+    patch:
+      summary: Update own user
+      description: This can only be done by a logged in user.
+      operationId: updateUser
+      tags:
+        - users
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+        required: true
+      responses:
+        200:
+          description: Own user updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSelf'
+    delete:
+      summary: Delete own user
+      description: This can only be done by a logged in user.
+      operationId: deleteUser
+      tags:
+        - users
+      security:
+        - ApiKeyAuth: []
+      responses:
+        202:
+          description: User deleted
+
+  /users/{username}:
     parameters:
       - $ref: '#/components/parameters/usernameParam'
 
     get:
-      tags:
-        - user
       summary: Get user by user name
       operationId: getUserByName
+      tags:
+        - users
+      security:
+        - ApiKeyAuth: []
       responses:
         200:
           description: successful operation
@@ -105,53 +170,39 @@ paths:
         404:
           description: User not found
           content: {}
-      security:
-        - ApiKeyAuth: []
-    patch:
-      tags:
-        - user
-      summary: Updated user
-      description: This can only be done by the logged in user.
-      operationId: updateUser
-      requestBody:
-        description: Updated user object
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/User'
-        required: true
-      responses:
-        400:
-          description: Invalid user supplied
-          content: {}
-        404:
-          description: User not found
-          content: {}
-      security:
-        - ApiKeyAuth: []
-    delete:
-      tags:
-        - user
-      summary: Delete user
-      description: This can only be done by the logged in user.
-      operationId: deleteUser
-      responses:
-        400:
-          description: Invalid username supplied
-          content: {}
-        404:
-          description: User not found
-          content: {}
-      security:
-        - ApiKeyAuth: []
 
 components:
   schemas:
-    User:
+    Credentials:
       type: object
+      required:
+        - username
+        - password
       properties:
         username:
           type: string
+          minLength: 3
+          maxLength: 50
+        password:
+          type: string
+          format: password
+
+    AccessToken:
+      type: object
+      properties:
+        token:
+          type: string
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
         joined_at:
           type: string
           format: date-time
@@ -169,29 +220,52 @@ components:
               format: date-time
               nullable: true
 
-    UserCreate:
-      required:
-        - email
-        - password
-        - username
+    UserUpdate:
       type: object
       properties:
         username:
-          maxLength: 50
-          minLength: 3
           type: string
+          minLength: 3
+          maxLength: 50
         email:
           type: string
           format: email
+
+    UserPassword:
+      type: object
+      required:
+        - password
+        - password_confirm
+      properties:
         password:
           type: string
           format: password
+        password_confirm:
+          type: string
+          format: password
+
+    UserCreate:
+      allOf:
+        - $ref: '#/components/schemas/UserUpdate'
+        - $ref: '#/components/schemas/UserPassword'
+        - type: object
+          required:
+            - username
+            - email
 
   parameters:
+    CookieRefreshToken:
+      description: The refresh token.
+      name: refresh_token
+      in: cookie
+      required: true
+      schema:
+        type: string
+
     usernameParam:
-      name: username
-      in: path
       description: The name that needs to be fetched.
+      in: path
+      name: username
       required: true
       schema:
         type: string
