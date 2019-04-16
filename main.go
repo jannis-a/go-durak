@@ -26,13 +26,13 @@ func Routes(c *app.App) *chi.Mux {
 }
 
 func main() {
-	app, err := app.New()
+	application, err := app.New()
 	if err != nil {
 		log.Panicln("Configuration error", err)
 	}
 
-	router := Routes(app)
+	router := Routes(application)
 
-	log.Println("listening on:", app.Config.PORT)
-	log.Fatal(http.ListenAndServe(":"+app.Config.PORT, router))
+	log.Println("listening on:", application.Config.PORT)
+	log.Fatal(http.ListenAndServe(":"+application.Config.PORT, router))
 }
