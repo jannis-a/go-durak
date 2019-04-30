@@ -1,4 +1,4 @@
-package user
+package users
 
 import (
 	"log"
@@ -18,12 +18,13 @@ type User struct {
 }
 
 func NewUser(db *sqlx.DB, username string, email string, password string) User {
+	// language=SQL
 	qry := `INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *`
 	result := db.QueryRowx(qry, username, email, HashPassword(password))
 
-	var u User
-	_ = result.StructScan(&u)
-	return u
+	var user User
+	_ = result.StructScan(&user)
+	return user
 }
 
 func HashPassword(plaintext string) string {

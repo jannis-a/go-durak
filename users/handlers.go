@@ -1,4 +1,4 @@
-package user
+package users
 
 import (
 	"net/http"
@@ -79,6 +79,7 @@ func DetailHandler(c *app.App) http.HandlerFunc {
 		username := chi.URLParam(r, "username")
 
 		var user User
+		// language=SQL
 		row := c.Db.QueryRowx(`SELECT * FROM users WHERE username = $1`, username)
 		_ = row.StructScan(&user)
 

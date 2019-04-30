@@ -1,4 +1,4 @@
-package user
+package users
 
 import (
 	"github.com/go-chi/chi"
@@ -6,18 +6,17 @@ import (
 	"github.com/jannis-a/go-durak/app"
 )
 
-type App struct {
-	*app.App
-}
-
 func Routes(app *app.App) *chi.Mux {
 	r := chi.NewRouter()
 
-	r.Get("/", ListHandler(app))
 	r.Post("/", CreateHandler(app))
+
+	r.Get("/", ListHandler(app))
 	r.Get("/{username}", DetailHandler(app))
-	r.Patch("/{username}", UpdateHandler(app))
-	r.Delete("/{username}", DeleteHandler(app))
+
+	r.Get("/users/me", DetailHandler(app))
+	r.Patch("/users/me", UpdateHandler(app))
+	r.Delete("/users/me", DeleteHandler(app))
 
 	return r
 }

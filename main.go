@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/chi/middleware"
 
 	"github.com/jannis-a/go-durak/app"
-	"github.com/jannis-a/go-durak/user"
+	"github.com/jannis-a/go-durak/users"
 )
 
 func Routes(c *app.App) *chi.Mux {
@@ -19,7 +19,7 @@ func Routes(c *app.App) *chi.Mux {
 	)
 
 	router.Route("/v1", func(r chi.Router) {
-		r.Mount("/users", user.Routes(c))
+		r.Mount("/users", users.Routes(c))
 	})
 
 	return router
