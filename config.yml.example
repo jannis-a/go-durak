@@ -1,9 +1,10 @@
 HOST: localhost
 PORT: 8080
 
-DB_HOST: localhost
-DB_PORT: 5432
-DB_SSL: disable
-DB_NAME: durak
-DB_USER: durak
-DB_PASSWORD: secret
+Postgres:
+  HOST: localhost
+  PORT: 5432
+  SSL: disable
+  NAME: durak
+  USER: durak
+  PASSWORD: secret
