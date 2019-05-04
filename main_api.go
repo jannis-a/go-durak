@@ -15,7 +15,7 @@ func main() {
 	app := env.NewApp(nil)
 
 	// Initialize routes
-	users.Initialize(app)
+	routes.Register(app, "users", users.Routes)
 
 	// Display all available routes
 	err := app.Router.Walk(routes.Walk)

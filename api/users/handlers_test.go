@@ -15,6 +15,7 @@ import (
 
 	"github.com/jannis-a/go-durak/api/users"
 	"github.com/jannis-a/go-durak/env"
+	"github.com/jannis-a/go-durak/routes"
 	"github.com/jannis-a/go-durak/utils"
 )
 
@@ -35,7 +36,7 @@ func createUserPub() users.UserPub {
 
 func TestMain(m *testing.M) {
 	app = env.NewApp(nil)
-	users.Initialize(app)
+	routes.Register(app, "users", users.Routes)
 
 	code := m.Run()
 	truncateTable()
