@@ -8,15 +8,19 @@ import (
 	"github.com/raja/argon2pw"
 )
 
-type User struct {
-	Id       uint      `json:"-"`
+type UserPub struct {
+	Id       uint      `json:"id"`
 	Username string    `json:"username"`
-	Email    string    `json:"email"`
-	Password string    `json:"-"`
 	JoinedAt time.Time `json:"joined_at" db:"joined_at"`
 }
 
-func NewUser(db *sqlx.DB, username string, email string, password string) User {
+type User struct {
+	UserPub
+	Email    string `json:"email"`
+	Password string `json:"-"`
+}
+
+func New(db *sqlx.DB, username string, email string, password string) User {
 	// language=SQL
 	qry := `INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *`
 	result := db.QueryRowx(qry, username, email, HashPassword(password))

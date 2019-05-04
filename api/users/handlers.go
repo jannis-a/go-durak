@@ -1,10 +1,10 @@
 package users
 
 import (
+	"log"
 	"net/http"
 	"net/url"
 
-	"github.com/go-chi/render"
 	"github.com/thedevsaddam/govalidator"
 
 	"github.com/jannis-a/go-durak/env"
@@ -13,18 +13,29 @@ import (
 )
 
 func ListHandler(a *env.App, w http.ResponseWriter, r *http.Request) error {
-	users := make([]User, 0)
+	rows, err := a.DB.Query(`SELECT id, username, joined_at FROM users`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
 
-	rows, _ := a.DB.Queryx(`SELECT * FROM users`)
+	var result []UserPub
 	for rows.Next() {
-		var u User
-		err := rows.StructScan(&u)
-		if err == nil {
-			users = append(users, u)
+		user := UserPub{}
+
+		err := rows.Scan(&user.Id, &user.Username, &user.JoinedAt)
+		if err != nil {
+			log.Fatal(err)
 		}
+
+		result = append(result, user)
 	}
 
-	render.JSON(w, r, users)
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	utils.RenderJson(w, result)
 	return nil
 }
 
@@ -60,31 +71,29 @@ func CreateHandler(a *env.App, w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if 0 < len(e) {
-		render.Status(r, http.StatusUnprocessableEntity)
-		render.JSON(w, r, map[string]url.Values{"errors": e})
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		utils.RenderJson(w, map[string]url.Values{"errors": e})
 		return nil
 	}
 
-	user := NewUser(a.DB, d["username"], d["email"], d["password"])
-	render.Status(r, http.StatusCreated)
-	render.JSON(w, r, user)
-
+	user := New(a.DB, d["username"], d["email"], d["password"])
+	w.WriteHeader(http.StatusCreated)
+	utils.RenderJson(w, user)
 	return nil
 }
 
 func DetailHandler(a *env.App, w http.ResponseWriter, r *http.Request) error {
 	username := utils.GetRouteParam(r, "username")
 
-	// language=SQL
-	row := a.DB.QueryRowx(`SELECT * FROM users WHERE username = $1`, username)
+	row := a.DB.QueryRowx(`SELECT id, username, joined_at FROM users WHERE username = $1`, username)
 
-	var user User
+	var user UserPub
 	err := row.StructScan(&user)
-	if err != nil {
+	if nil != err {
 		return handler.NewStatusError(http.StatusNotFound, "")
 	}
 
-	render.JSON(w, r, user)
+	utils.RenderJson(w, user)
 	return nil
 }
 
@@ -101,7 +110,7 @@ func DeleteHandler(a *env.App, w http.ResponseWriter, r *http.Request) error {
 		return handler.NewStatusError(http.StatusNotFound, "")
 	}
 
-	render.Status(r, http.StatusAccepted)
-	render.PlainText(w, r, "")
+	w.WriteHeader(http.StatusAccepted)
+	utils.RenderJson(w, nil)
 	return nil
 }
