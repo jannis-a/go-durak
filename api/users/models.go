@@ -14,7 +14,6 @@ type User struct {
 	Email    string    `json:"email"`
 	Password string    `json:"-"`
 	JoinedAt time.Time `json:"joined_at" db:"joined_at"`
-	// UpdatedAt pq.NullTime `json:"updated_at" db:"updated_at"`
 }
 
 func NewUser(db *sqlx.DB, username string, email string, password string) User {
@@ -23,7 +22,10 @@ func NewUser(db *sqlx.DB, username string, email string, password string) User {
 	result := db.QueryRowx(qry, username, email, HashPassword(password))
 
 	var user User
-	_ = result.StructScan(&user)
+	err := result.StructScan(&user)
+	if err != nil {
+		println(err.Error())
+	}
 	return user
 }
 
