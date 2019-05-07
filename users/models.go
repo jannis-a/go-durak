@@ -1,17 +1,17 @@
 package users
 
 import (
+	"database/sql"
 	"log"
 	"time"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/raja/argon2pw"
 )
 
 type UserPub struct {
 	Id       uint      `json:"id"`
 	Username string    `json:"username"`
-	JoinedAt time.Time `json:"joined_at" db:"joined_at"`
+	JoinedAt time.Time `json:"joined_at"`
 }
 
 type User struct {
@@ -20,13 +20,11 @@ type User struct {
 	Password string `json:"-"`
 }
 
-func New(db *sqlx.DB, username string, email string, password string) User {
-	// language=SQL
-	qry := `INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING *`
-	result := db.QueryRowx(qry, username, email, HashPassword(password))
-
+func New(db *sql.DB, username string, email string, password string) User {
 	var user User
-	err := result.StructScan(&user)
+	qry := `insert into users (username, email, password) values ($1, $2, $3) returning *`
+	res := db.QueryRow(qry, username, email, HashPassword(password))
+	err := res.Scan(&user.Id, &user.Username, &user.Email, &user.JoinedAt)
 	if err != nil {
 		println(err.Error())
 	}

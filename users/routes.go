@@ -1,10 +1,10 @@
 package users
 
 import (
-	"github.com/jannis-a/go-durak/routes"
+	"github.com/jannis-a/go-durak/app"
 )
 
-var Routes = []routes.Route{
+var Routes = []app.Route{
 	{"create", "POST", "", CreateHandler},
 	{"list", "GET", "", ListHandler},
 	{"read", "GET", "/{username}", DetailHandler},

@@ -1,20 +1,19 @@
-package env
+package app
 
 import (
+	"database/sql"
+
 	"github.com/gorilla/mux"
-	"github.com/jmoiron/sqlx"
 )
 
 type App struct {
 	Router *mux.Router
-	DB     *sqlx.DB
+	DB     *sql.DB
 	Config *Config
 }
 
-func NewApp(config *Config) *App {
-	if config == nil {
-		config = NewConfig()
-	}
+func NewApp() *App {
+	config := NewConfig()
 
 	return &App{
 		Config: config,

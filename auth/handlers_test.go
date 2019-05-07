@@ -4,20 +4,20 @@ import (
 	"os"
 	"testing"
 
-	"github.com/jannis-a/go-durak/api/auth"
-	"github.com/jannis-a/go-durak/env"
-	"github.com/jannis-a/go-durak/routes"
+	"github.com/jannis-a/go-durak/app"
+	"github.com/jannis-a/go-durak/auth"
 )
 
-var app *env.App
+var a *app.App
 
 func tearDown() {
-	_, _ = app.DB.Exec(`truncate table users, tokens cascade`)
+	_, _ = a.DB.Exec(`truncate table users, tokens cascade`)
 }
 
 func TestMain(m *testing.M) {
-	app = env.NewApp(nil)
-	routes.Register(app, "auth", auth.Routes)
+	a = app.NewApp(nil)
+	a.Register("auth", auth.Routes)
+	// env.RegisterOld(app, "auth", auth.Routes)
 
 	retCode := m.Run()
 	tearDown()

@@ -19,20 +19,29 @@ func GetPackagePath() string {
 	return path.Join(gopath, "src", "github.com", "jannis-a", "go-durak")
 }
 
-func GetRouteParam(r *http.Request, name string) string {
-	if vars := mux.Vars(r); vars != nil {
-		return vars[name]
+func HttpError(w http.ResponseWriter, code int, text string) {
+	if text == "" {
+		text = http.StatusText(code)
 	}
-	return ""
+
+	http.Error(w, text, code)
+}
+
+func GetRouteParam(r *http.Request, name string) string {
+	vars := mux.Vars(r)
+	if vars == nil {
+		return ""
+	}
+	return vars[name]
 }
 
 func RenderJson(w http.ResponseWriter, value interface{}) {
-	encoded, err := json.Marshal(&value)
+	data, err := json.Marshal(&value)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	_, _ = w.Write(encoded)
+	w.Write(data)
 }

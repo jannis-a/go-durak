@@ -9,11 +9,11 @@ import (
 
 	"github.com/raja/argon2pw"
 
-	"github.com/jannis-a/go-durak/env"
-	"github.com/jannis-a/go-durak/handler"
+	"github.com/jannis-a/go-durak/app"
+	"github.com/jannis-a/go-durak/utils"
 )
 
-func LoginHandler(a *env.App, w http.ResponseWriter, r *http.Request) error {
+func LoginHandler(a *app.App, w http.ResponseWriter, r *http.Request) {
 	var (
 		creds    Credentials
 		subject  uint
@@ -21,8 +21,10 @@ func LoginHandler(a *env.App, w http.ResponseWriter, r *http.Request) error {
 	)
 
 	// Decode credentials
-	if err := json.NewDecoder(r.Body).Decode(&creds); err != nil {
-		return handler.NewStatusError(http.StatusBadRequest, err.Error())
+	err := json.NewDecoder(r.Body).Decode(&creds)
+	if err != nil {
+		utils.HttpError(w, http.StatusBadRequest, err.Error())
+		return
 	}
 
 	// Get user data and
@@ -34,9 +36,11 @@ func LoginHandler(a *env.App, w http.ResponseWriter, r *http.Request) error {
 	// Validate credentials
 	valid, err := argon2pw.CompareHashWithPassword(password, creds.Password)
 	if err != nil {
-		return handler.NewStatusError(http.StatusInternalServerError, err.Error())
+		utils.HttpError(w, http.StatusInternalServerError, err.Error())
+		return
 	} else if !valid {
-		return handler.NewStatusError(http.StatusUnauthorized, "")
+		utils.HttpError(w, http.StatusUnauthorized, "")
+		return
 	}
 
 	// Create refresh token
@@ -62,26 +66,27 @@ func LoginHandler(a *env.App, w http.ResponseWriter, r *http.Request) error {
 		Secure: true,
 	})
 	w.Write([]byte(access))
-	return nil
 }
 
-func RefreshHandler(a *env.App, w http.ResponseWriter, r *http.Request) error {
+func RefreshHandler(a *app.App, w http.ResponseWriter, r *http.Request) {
 	var (
 		subject  uint
 		username string
 	)
 
-	// Get refresh token
-	refresh, err := getRefreshToken(r)
-	if err != nil {
-		return err
+	// Get refresh token from request
+	refresh := getRefreshToken(r)
+	if refresh == "" {
+		utils.HttpError(w, http.StatusUnauthorized, "")
+		return
 	}
 
 	// Validate token and fetch subject data
 	qry := `select u.id, u.username from users u, tokens t where u.id = t.user_id and t.token = $1`
 	row := a.DB.QueryRow(qry, refresh)
 	if err := row.Scan(&subject, &username); err != nil {
-		return handler.NewStatusError(http.StatusUnauthorized, "")
+		utils.HttpError(w, http.StatusUnauthorized, "")
+		return
 	}
 
 	// Create access token
@@ -89,18 +94,18 @@ func RefreshHandler(a *env.App, w http.ResponseWriter, r *http.Request) error {
 
 	// Response
 	w.Write([]byte(access))
-	return nil
 }
 
-func LogoutHandler(a *env.App, w http.ResponseWriter, r *http.Request) error {
+func LogoutHandler(a *app.App, w http.ResponseWriter, r *http.Request) {
 	// Get refresh token from request
-	refresh, err := getRefreshToken(r)
-	if err != nil {
-		return err
+	refresh := getRefreshToken(r)
+	if refresh == "" {
+		utils.HttpError(w, http.StatusUnauthorized, "")
+		return
 	}
 
 	// Invalidate refresh token
-	_, err = a.DB.Exec(`delete from tokens where token = $1`, refresh)
+	_, err := a.DB.Exec(`delete from tokens where token = $1`, refresh)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -108,5 +113,5 @@ func LogoutHandler(a *env.App, w http.ResponseWriter, r *http.Request) error {
 	// TODO: check for access_token and blacklist in redis
 
 	// Response
-	return nil
+	return
 }

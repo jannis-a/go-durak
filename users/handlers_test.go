@@ -13,20 +13,19 @@ import (
 	"github.com/raja/argon2pw"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/jannis-a/go-durak/api/users"
-	"github.com/jannis-a/go-durak/env"
-	"github.com/jannis-a/go-durak/routes"
+	"github.com/jannis-a/go-durak/app"
+	"github.com/jannis-a/go-durak/users"
 	"github.com/jannis-a/go-durak/utils"
 )
 
-var app *env.App
+var a *app.App
 
 func truncateTable() {
-	_, _ = app.DB.Exec(`TRUNCATE TABLE users CASCADE`)
+	_, _ = a.DB.Exec(`TRUNCATE TABLE users`)
 }
 
 func createUser() users.User {
-	return users.New(app.DB, randomdata.SillyName(), randomdata.Email(), "secret")
+	return users.New(a.DB, randomdata.SillyName(), randomdata.Email(), "secret")
 }
 
 func createUserPub() users.UserPub {
@@ -35,8 +34,8 @@ func createUserPub() users.UserPub {
 }
 
 func TestMain(m *testing.M) {
-	app = env.NewApp(nil)
-	routes.Register(app, "users", users.Routes)
+	a = app.NewApp()
+	a.Register("users", users.Routes)
 
 	truncateTable()
 	code := m.Run()
@@ -50,7 +49,7 @@ func TestList(t *testing.T) {
 	req, err := http.NewRequest("GET", "/users", nil)
 	assert.Nil(t, err)
 
-	res := utils.DispatchRequest(app.Router, req)
+	res := utils.DispatchRequest(a.Router, req)
 	assert.Equal(t, http.StatusOK, res.Code)
 
 	var result []users.UserPub
@@ -66,7 +65,7 @@ func TestDetail(t *testing.T) {
 	req, err := http.NewRequest("GET", "/users/"+expected.Username, nil)
 	assert.Nil(t, err)
 
-	res := utils.DispatchRequest(app.Router, req)
+	res := utils.DispatchRequest(a.Router, req)
 	assert.Equal(t, http.StatusOK, res.Code)
 
 	var result users.UserPub
@@ -89,12 +88,12 @@ func TestCreate(t *testing.T) {
 	req, err := http.NewRequest("POST", "/users", bytes.NewBuffer(payload))
 	assert.Nil(t, err)
 
-	res := utils.DispatchRequest(app.Router, req)
+	res := utils.DispatchRequest(a.Router, req)
 	assert.Equal(t, http.StatusCreated, res.Code)
 
-	row := app.DB.QueryRowx(`SELECT * FROM users WHERE username = $1`, data["username"])
+	row := a.DB.QueryRow(`SELECT * FROM users WHERE username = $1`, data["username"])
 	var user users.User
-	err = row.StructScan(&user)
+	err = row.Scan(&user.Id, &user.Username, &user.Email, &user.JoinedAt)
 	assert.Nil(t, err)
 
 	expected := fmt.Sprintf(`{"id":%d,"username":"%s","joined_at":"%s","email":"%s"}`,

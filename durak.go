@@ -7,28 +7,25 @@ import (
 
 	"github.com/gorilla/handlers"
 
-	"github.com/jannis-a/go-durak/api/auth"
-	"github.com/jannis-a/go-durak/api/users"
-	"github.com/jannis-a/go-durak/env"
-	"github.com/jannis-a/go-durak/routes"
+	"github.com/jannis-a/go-durak/app"
+	"github.com/jannis-a/go-durak/auth"
+	"github.com/jannis-a/go-durak/users"
 )
 
 func main() {
-	// Create the application
-	app := env.NewApp(nil)
-
-	// Initialize routes
-	routes.Register(app, "auth", auth.Routes)
-	routes.Register(app, "users", users.Routes)
+	// Create app and register routes
+	a := app.NewApp()
+	a.Register("auth", auth.Routes)
+	a.Register("users", users.Routes)
 
 	// Display all available routes
-	err := app.Router.Walk(routes.Walk)
+	err := a.Router.Walk(app.Walk)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Serve routes
-	handler := handlers.LoggingHandler(os.Stdout, app.Router)
-	log.Println("listening on", app.Config.BIND)
-	log.Fatal(http.ListenAndServe(app.Config.BIND, handler))
+	handler := handlers.LoggingHandler(os.Stdout, a.Router)
+	log.Println("listening on", a.Config.BIND)
+	log.Fatal(http.ListenAndServe(a.Config.BIND, handler))
 }

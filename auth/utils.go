@@ -9,25 +9,21 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 
-	"github.com/jannis-a/go-durak/env"
-	"github.com/jannis-a/go-durak/handler"
+	"github.com/jannis-a/go-durak/app"
 )
 
 const RefreshCookieName = "refresh_token"
 
-func getRefreshToken(r *http.Request) (string, error) {
+func getRefreshToken(r *http.Request) string {
 	cookie, err := r.Cookie(RefreshCookieName)
 	if err != nil {
-		if err == http.ErrNoCookie {
-			return "", handler.NewStatusError(http.StatusUnauthorized, "")
-		}
-		return "", handler.NewStatusError(http.StatusBadRequest, "")
+		return ""
 	}
 
-	return cookie.Value, nil
+	return cookie.Value
 }
 
-func createAccessToken(a *env.App, user uint, username string) string {
+func createAccessToken(a *app.App, user uint, username string) string {
 	claims := &Claims{
 		StandardClaims: jwt.StandardClaims{
 			Subject:   strconv.Itoa(int(user)),
@@ -44,7 +40,7 @@ func createAccessToken(a *env.App, user uint, username string) string {
 	return signed
 }
 
-func ClaimsFromToken(a *env.App, r *http.Request) *Claims {
+func ClaimsFromToken(a *app.App, r *http.Request) *Claims {
 	header := r.Header.Get("Authorization")
 	values := strings.Split(header, " ")
 	if len(values) != 2 {
