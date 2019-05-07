@@ -13,7 +13,7 @@ type Route struct {
 	Handler HandlerFunc
 }
 
-func (a *App) Register(prefix string, routes []Route) {
+func (a *App) RegisterApi(prefix string, routes []Route) {
 	router := a.Router.PathPrefix("/" + prefix).Subrouter()
 
 	for _, r := range routes {
@@ -22,7 +22,6 @@ func (a *App) Register(prefix string, routes []Route) {
 			Methods(r.Method).
 			Path(r.Path).
 			Handler(Handler{a, r.Handler})
-
 	}
 }
 

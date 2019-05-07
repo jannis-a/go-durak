@@ -15,8 +15,8 @@ func tearDown() {
 }
 
 func TestMain(m *testing.M) {
-	a = app.NewApp(nil)
-	a.Register("auth", auth.Routes)
+	a = app.NewApp()
+	a.RegisterApi("auth", auth.Routes)
 	// env.RegisterOld(app, "auth", auth.Routes)
 
 	retCode := m.Run()

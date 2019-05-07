@@ -35,7 +35,7 @@ func createUserPub() users.UserPub {
 
 func TestMain(m *testing.M) {
 	a = app.NewApp()
-	a.Register("users", users.Routes)
+	a.RegisterApi("users", users.Routes)
 
 	truncateTable()
 	code := m.Run()

@@ -15,8 +15,8 @@ import (
 func main() {
 	// Create app and register routes
 	a := app.NewApp()
-	a.Register("auth", auth.Routes)
-	a.Register("users", users.Routes)
+	a.RegisterApi("auth", auth.Routes)
+	a.RegisterApi("users", users.Routes)
 
 	// Display all available routes
 	err := a.Router.Walk(app.Walk)
