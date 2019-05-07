@@ -1,0 +1,19 @@
+POST {{base_url}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "mrhanky",
+  "password": "sup3rs3cr3t"
+}
+
+###
+
+GET {{base_url}}/auth/refresh
+Cookie: refresh_token=fea894874c2175ee427sss24a2906ac5c50; Secure
+
+###
+
+POST {{base_url}}/auth/logout
+Cookie: refresh_token=2a500bab645331d496fba94d8aedac50; Secure
+
+###

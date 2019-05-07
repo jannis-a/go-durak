@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/handlers"
 
+	"github.com/jannis-a/go-durak/api/auth"
 	"github.com/jannis-a/go-durak/api/users"
 	"github.com/jannis-a/go-durak/env"
 	"github.com/jannis-a/go-durak/routes"
@@ -17,6 +18,7 @@ func main() {
 	app := env.NewApp(nil)
 
 	// Initialize routes
+	routes.Register(app, "auth", auth.Routes)
 	routes.Register(app, "users", users.Routes)
 
 	// Display all available routes
