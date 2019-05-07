@@ -6,7 +6,7 @@ import (
 
 // The Handler struct that takes a configured Env and a function matching our useful signature.
 type Handler struct {
-	*App
+	app  *App
 	Func HandlerFunc
 }
 
@@ -15,5 +15,5 @@ type HandlerFunc func(*App, http.ResponseWriter, *http.Request)
 
 // ServeHTTP allows our Handler type to satisfy http.Handler.
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.Func(h.App, w, r)
+	h.Func(h.app, w, r)
 }
