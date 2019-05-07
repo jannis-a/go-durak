@@ -21,7 +21,7 @@ import (
 var a *app.App
 
 func truncateTable() {
-	_, _ = a.DB.Exec(`TRUNCATE TABLE users`)
+	_, _ = a.DB.Exec(`TRUNCATE TABLE users CASCADE`)
 }
 
 func createUser() users.User {
