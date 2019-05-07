@@ -23,22 +23,25 @@ func LoginHandler(a *app.App, w http.ResponseWriter, r *http.Request) {
 	// Decode credentials
 	err := json.NewDecoder(r.Body).Decode(&creds)
 	if err != nil {
-		utils.HttpError(w, http.StatusBadRequest, err.Error())
+		utils.HttpError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if creds.Username == "" || creds.Password == "" {
+		utils.HttpError(w, http.StatusBadRequest, "")
 		return
 	}
 
 	// Get user data and
 	row := a.DB.QueryRow(`select id, password from users where username = $1`, creds.Username)
 	if err := row.Scan(&subject, &password); err != nil {
-		log.Fatal(err)
+		utils.HttpError(w, http.StatusUnauthorized, "")
+		return
 	}
 
 	// Validate credentials
 	valid, err := argon2pw.CompareHashWithPassword(password, creds.Password)
-	if err != nil {
-		utils.HttpError(w, http.StatusInternalServerError, err.Error())
-		return
-	} else if !valid {
+	if err != nil || !valid {
 		utils.HttpError(w, http.StatusUnauthorized, "")
 		return
 	}
@@ -61,9 +64,10 @@ func LoginHandler(a *app.App, w http.ResponseWriter, r *http.Request) {
 
 	// Response
 	http.SetCookie(w, &http.Cookie{
-		Name:   RefreshCookieName,
-		Value:  refresh,
-		Secure: true,
+		Name:  RefreshCookieName,
+		Value: refresh,
+		// TODO: Secure:   true,
+		HttpOnly: true,
 	})
 	w.Write([]byte(access))
 }
