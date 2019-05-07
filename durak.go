@@ -3,7 +3,9 @@ package main
 import (
 	"log"
 	"net/http"
-	"strconv"
+	"os"
+
+	"github.com/gorilla/handlers"
 
 	"github.com/jannis-a/go-durak/api/users"
 	"github.com/jannis-a/go-durak/env"
@@ -24,7 +26,7 @@ func main() {
 	}
 
 	// Serve routes
-	addr := ":" + strconv.Itoa(app.Config.PORT)
-	log.Println("listening on", addr)
-	log.Fatal(http.ListenAndServe(addr, app.Router))
+	handler := handlers.LoggingHandler(os.Stdout, app.Router)
+	log.Println("listening on", app.Config.BIND)
+	log.Fatal(http.ListenAndServe(app.Config.BIND, handler))
 }

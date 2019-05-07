@@ -10,8 +10,8 @@ import (
 )
 
 type Config struct {
-	HOST string
-	PORT int
+	BIND string
+	KEY  string
 	DB   string
 }
 
