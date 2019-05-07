@@ -22,7 +22,7 @@ import (
 var app *env.App
 
 func truncateTable() {
-	_, _ = app.DB.Exec(`TRUNCATE TABLE users`)
+	_, _ = app.DB.Exec(`TRUNCATE TABLE users CASCADE`)
 }
 
 func createUser() users.User {
@@ -38,6 +38,7 @@ func TestMain(m *testing.M) {
 	app = env.NewApp(nil)
 	routes.Register(app, "users", users.Routes)
 
+	truncateTable()
 	code := m.Run()
 	truncateTable()
 	os.Exit(code)
