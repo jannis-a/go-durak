@@ -34,7 +34,7 @@ func LoginHandler(a *app.App, w http.ResponseWriter, r *http.Request) {
 
 	// Get user data and
 	row := a.DB.QueryRow(`select id, password from users where username = $1`, creds.Username)
-	if err := row.Scan(&subject, &password); err != nil {
+	if _ = row.Scan(&subject, &password); subject == 0 {
 		utils.HttpError(w, http.StatusUnauthorized, "")
 		return
 	}
@@ -81,7 +81,7 @@ func RefreshHandler(a *app.App, w http.ResponseWriter, r *http.Request) {
 	// Get refresh token from request
 	refresh := getRefreshToken(r)
 	if refresh == "" {
-		utils.HttpError(w, http.StatusUnauthorized, "")
+		utils.HttpError(w, http.StatusBadRequest, "")
 		return
 	}
 
@@ -104,18 +104,16 @@ func LogoutHandler(a *app.App, w http.ResponseWriter, r *http.Request) {
 	// Get refresh token from request
 	refresh := getRefreshToken(r)
 	if refresh == "" {
-		utils.HttpError(w, http.StatusUnauthorized, "")
+		utils.HttpError(w, http.StatusBadRequest, "")
 		return
 	}
 
 	// Invalidate refresh token
-	_, err := a.DB.Exec(`delete from tokens where token = $1`, refresh)
-	if err != nil {
-		log.Fatal(err)
+	res, _ := a.DB.Exec(`delete from tokens where token = $1`, refresh)
+	if rows, _ := res.RowsAffected(); rows == 0 {
+		utils.HttpError(w, http.StatusUnauthorized, "")
+		return
 	}
 
 	// TODO: check for access_token and blacklist in redis
-
-	// Response
-	return
 }

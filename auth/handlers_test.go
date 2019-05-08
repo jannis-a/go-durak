@@ -23,6 +23,7 @@ var (
 	id       uint
 	username string
 	password string
+	refresh  string
 )
 
 func setUp() {
@@ -69,7 +70,11 @@ func TestLoginHandler(t *testing.T) {
 		Data: map[string]string{"password": password},
 		Code: http.StatusBadRequest,
 	}, {
-		Name: "invalid credentials",
+		Name: "invalid username",
+		Data: map[string]string{"username": "INVALID", "password": password},
+		Code: http.StatusUnauthorized,
+	}, {
+		Name: "invalid password",
 		Data: map[string]string{"username": username, "password": "INVALID"},
 		Code: http.StatusUnauthorized,
 	}, {
@@ -82,7 +87,6 @@ func TestLoginHandler(t *testing.T) {
 			assert.NotEmpty(t, access)
 
 			// Check for refresh token cookie
-			var refresh string
 			for _, c := range res.Result().Cookies() {
 				if c.Name == auth.RefreshCookieName {
 					assert.NotEmpty(t, c.Value)
@@ -123,18 +127,31 @@ func TestLoginHandler(t *testing.T) {
 func TestRefreshHandler(t *testing.T) {
 	testCases := []utils.ApiTestCase{{
 		Name: "missing cookie",
+		Data: "",
 		Code: http.StatusBadRequest,
 	}, {
 		Name: "invalid token",
+		Data: "INVALID",
 		Code: http.StatusUnauthorized,
 	}, {
 		Name: "valid token",
+		Data: refresh,
 		Code: http.StatusOK,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			t.Error("Not implemented.")
+			req, err := http.NewRequest("GET", "/auth/refresh", nil)
+			assert.Nil(t, err)
+
+			req.AddCookie(&http.Cookie{
+				Name:     auth.RefreshCookieName,
+				Value:    tc.Data.(string),
+				HttpOnly: true,
+			})
+
+			res := utils.DispatchRequest(a.Router, req)
+			assert.Equal(t, tc.Code, res.Code)
 		})
 	}
 }
@@ -142,18 +159,31 @@ func TestRefreshHandler(t *testing.T) {
 func TestLogoutHandler(t *testing.T) {
 	testCases := []utils.ApiTestCase{{
 		Name: "missing cookie",
+		Data: "",
 		Code: http.StatusBadRequest,
 	}, {
 		Name: "invalid token",
+		Data: "INVALID",
 		Code: http.StatusUnauthorized,
 	}, {
 		Name: "valid token",
+		Data: refresh,
 		Code: http.StatusOK,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			t.Error("Not implemented.")
+			req, err := http.NewRequest("POST", "/auth/logout", nil)
+			assert.Nil(t, err)
+
+			req.AddCookie(&http.Cookie{
+				Name:     auth.RefreshCookieName,
+				Value:    tc.Data.(string),
+				HttpOnly: true,
+			})
+
+			res := utils.DispatchRequest(a.Router, req)
+			assert.Equal(t, tc.Code, res.Code)
 		})
 	}
 }
