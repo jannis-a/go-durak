@@ -54,7 +54,8 @@ func LoginHandler(a *app.App, w http.ResponseWriter, r *http.Request) {
 	refresh := fmt.Sprintf("%x", bytes)
 
 	// Insert refresh token into database
-	_, err = a.DB.Exec(`insert into tokens (user_id, token) values ($1, $2)`, subject, refresh)
+	_, err = a.DB.Exec(`insert into tokens (user_id, token, login_ip) values ($1, $2, $3)`,
+		subject, refresh, utils.GetIpAddr(r))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -86,7 +87,9 @@ func RefreshHandler(a *app.App, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate token and fetch subject data
-	qry := `select u.id, u.username from users u, tokens t where u.id = t.user_id and t.token = $1`
+	qry := `update tokens set refresh_at = now() from tokens t, users u
+	 				where u.id = t.user_id and t.token = $1
+	 				returning u.id, u.username`
 	row := a.DB.QueryRow(qry, refresh)
 	if err := row.Scan(&subject, &username); err != nil {
 		utils.HttpError(w, http.StatusUnauthorized, "")

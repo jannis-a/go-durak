@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/Pallinder/go-randomdata"
 	"github.com/raja/argon2pw"
@@ -81,7 +82,7 @@ func TestLoginHandler(t *testing.T) {
 		Name: "valid credentials",
 		Data: map[string]string{"username": username, "password": password},
 		Code: http.StatusOK,
-		Func: func(t *testing.T, res *httptest.ResponseRecorder) {
+		Func: func(t *testing.T, req *http.Request, res *httptest.ResponseRecorder) {
 			// Assert access token is not empty
 			access := res.Body.String()
 			assert.NotEmpty(t, access)
@@ -118,7 +119,7 @@ func TestLoginHandler(t *testing.T) {
 			assert.Equal(t, tc.Code, res.Code)
 
 			if tc.Func != nil {
-				tc.Func(t, res)
+				tc.Func(t, req, res)
 			}
 		})
 	}
@@ -137,6 +138,18 @@ func TestRefreshHandler(t *testing.T) {
 		Name: "valid token",
 		Data: refresh,
 		Code: http.StatusOK,
+		Func: func(t *testing.T, req *http.Request, res *httptest.ResponseRecorder) {
+			var (
+				ip string
+				at time.Time
+			)
+
+			row := a.DB.QueryRow(`select login_ip, refresh_at from tokens where token = $1`, refresh)
+			err := row.Scan(&ip, &at)
+			assert.Nil(t, err)
+			assert.NotNil(t, at)
+			assert.Equal(t, utils.GetIpAddr(req), ip)
+		},
 	}}
 
 	for _, tc := range testCases {
@@ -152,6 +165,10 @@ func TestRefreshHandler(t *testing.T) {
 
 			res := utils.DispatchRequest(a.Router, req)
 			assert.Equal(t, tc.Code, res.Code)
+
+			if tc.Func != nil {
+				tc.Func(t, req, res)
+			}
 		})
 	}
 }

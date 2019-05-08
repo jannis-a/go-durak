@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/gorilla/mux"
 )
@@ -25,6 +26,10 @@ func HttpError(w http.ResponseWriter, code int, text string) {
 	}
 
 	http.Error(w, text, code)
+}
+
+func GetIpAddr(r *http.Request) string {
+	return strings.Split(r.RemoteAddr, ":")[0]
 }
 
 func GetRouteParam(r *http.Request, name string) string {
