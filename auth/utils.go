@@ -23,7 +23,7 @@ func getRefreshToken(r *http.Request) string {
 	return cookie.Value
 }
 
-func createAccessToken(a *app.App, user uint, username string) string {
+func CreateAccessToken(a *app.App, user uint, username string) string {
 	claims := &Claims{
 		StandardClaims: jwt.StandardClaims{
 			Subject:   strconv.Itoa(int(user)),
@@ -40,6 +40,12 @@ func createAccessToken(a *app.App, user uint, username string) string {
 	return signed
 }
 
+func KeyFunc(a *app.App) jwt.Keyfunc {
+	return func(token *jwt.Token) (interface{}, error) {
+		return []byte(a.Config.KEY), nil
+	}
+}
+
 func ClaimsFromToken(a *app.App, r *http.Request) *Claims {
 	header := r.Header.Get("Authorization")
 	values := strings.Split(header, " ")
@@ -48,9 +54,7 @@ func ClaimsFromToken(a *app.App, r *http.Request) *Claims {
 	}
 
 	claims := &Claims{}
-	token, err := jwt.ParseWithClaims(values[1], claims, func(token *jwt.Token) (interface{}, error) {
-		return a.Config.KEY, nil
-	})
+	token, err := jwt.ParseWithClaims(values[1], claims, KeyFunc(a))
 	if err != nil {
 		log.Fatal(err)
 	}
