@@ -55,33 +55,30 @@ func TestMain(m *testing.M) {
 	os.Exit(retCode)
 }
 
+
 func TestLoginHandler(t *testing.T) {
 	testCases := []utils.ApiTestCase{{
-		"missing username and password",
-		map[string]string{},
-		http.StatusBadRequest,
-		nil,
+		Name: "missing username and password",
+		Data: map[string]string{},
+		Code: http.StatusBadRequest,
 	}, {
-		"missing password",
-		map[string]string{"username": username},
-		http.StatusBadRequest,
-		nil,
+		Name: "missing password",
+		Data: map[string]string{"username": username},
+		Code: http.StatusBadRequest,
 	}, {
-		"missing username",
-		map[string]string{"password": password},
-		http.StatusBadRequest,
-		nil,
+		Name: "missing username",
+		Data: map[string]string{"password": password},
+		Code: http.StatusBadRequest,
 	}, {
-		"invalid credentials",
-		map[string]string{"username": username, "password": "INVALID"},
-		http.StatusUnauthorized,
-		nil,
+		Name: "invalid credentials",
+		Data: map[string]string{"username": username, "password": "INVALID"},
+		Code: http.StatusUnauthorized,
 	}, {
-		"valid credentials",
-		map[string]string{"username": username, "password": password},
-		http.StatusOK,
-		func(t *testing.T, res *httptest.ResponseRecorder) {
-			// Assert non-empty response
+		Name: "valid credentials",
+		Data: map[string]string{"username": username, "password": password},
+		Code: http.StatusOK,
+		Func: func(t *testing.T, res *httptest.ResponseRecorder) {
+			// Assert access token is not empty
 			access := res.Body.String()
 			assert.NotEmpty(t, access)
 
@@ -125,29 +122,39 @@ func TestLoginHandler(t *testing.T) {
 }
 
 func TestRefreshHandler(t *testing.T) {
-	t.Run("missing cookie", func(t *testing.T) {
-		t.Fatal("Not implemented")
-	})
+	testCases := []utils.ApiTestCase{{
+		Name: "missing cookie",
+		Code: http.StatusBadRequest,
+	}, {
+		Name: "invalid token",
+		Code: http.StatusUnauthorized,
+	}, {
+		Name: "valid token",
+		Code: http.StatusOK,
+	}}
 
-	t.Run("invalid token", func(t *testing.T) {
-		t.Fatal("Not implemented")
-	})
-
-	t.Run("valid token", func(t *testing.T) {
-		t.Fatal("Not implemented")
-	})
+	for _, tc := range testCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Fatal("Not implemented")
+		})
+	}
 }
 
 func TestLogoutHandler(t *testing.T) {
-	t.Run("missing cookie", func(t *testing.T) {
-		t.Fatal("Not implemented")
-	})
+	testCases := []utils.ApiTestCase{{
+		Name: "missing cookie",
+		Code: http.StatusBadRequest,
+	}, {
+		Name: "invalid token",
+		Code: http.StatusUnauthorized,
+	}, {
+		Name: "valid token",
+		Code: http.StatusOK,
+	}}
 
-	t.Run("invalid token", func(t *testing.T) {
-		t.Fatal("Not implemented")
-	})
-
-	t.Run("valid token", func(t *testing.T) {
-		t.Fatal("Not implemented")
-	})
+	for _, tc := range testCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Fatal("Not implemented")
+		})
+	}
 }
