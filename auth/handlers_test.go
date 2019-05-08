@@ -22,39 +22,43 @@ import (
 var (
 	a        *app.App
 	id       uint
-	username string
-	password string
-	refresh  string
-)
-
-func setUp() {
 	username = randomdata.SillyName()
 	password = randomdata.RandStringRunes(randomdata.Number(8, 32))
+	refresh  = randomdata.RandStringRunes(32)
+)
 
+func setUp(t *testing.T) func(*testing.T) {
+	t.Log("Setup tables")
+
+	// Hash password
 	hashed, err := argon2pw.GenerateSaltedHash(password)
 	if err != nil {
 		log.Panic(err)
 	}
 
+	// Create user
 	qry := `insert into users (username, email, password) values ($1, $2, $3) returning id`
 	res := a.DB.QueryRow(qry, username, randomdata.Email(), hashed)
-	if err := res.Scan(&id); err != nil {
-		log.Panic(err)
-	}
-}
+	assert.Nil(t, res.Scan(&id))
 
-func tearDown() {
-	a.DB.Exec(`truncate table users, tokens cascade`)
+	// Create token
+	a.DB.Exec(`insert into tokens (user_id, token, login_ip) values ($1, $2, $3)`, id, refresh, "127.0.0.1")
+
+	return func(t *testing.T) {
+		t.Log("Teardown tables")
+
+		a.DB.Exec(`truncate table tokens cascade;
+                     alter sequence tokens_id_seq restart;
+                     truncate table users cascade;
+                     alter sequence users_id_seq restart;`)
+	}
 }
 
 func TestMain(m *testing.M) {
 	a = app.NewApp()
 	a.RegisterApi("auth", auth.Routes)
 
-	setUp()
-	retCode := m.Run()
-	tearDown()
-	os.Exit(retCode)
+	os.Exit(m.Run())
 }
 
 func TestLoginHandler(t *testing.T) {
@@ -109,6 +113,9 @@ func TestLoginHandler(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
+			tearDown := setUp(t)
+			defer tearDown(t)
+
 			data, err := json.Marshal(tc.Data)
 			assert.Nil(t, err)
 
@@ -154,6 +161,9 @@ func TestRefreshHandler(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
+			tearDown := setUp(t)
+			defer tearDown(t)
+
 			req, err := http.NewRequest("GET", "/auth/refresh", nil)
 			assert.Nil(t, err)
 
@@ -190,6 +200,9 @@ func TestLogoutHandler(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
+			tearDown := setUp(t)
+			defer tearDown(t)
+
 			req, err := http.NewRequest("POST", "/auth/logout", nil)
 			assert.Nil(t, err)
 
