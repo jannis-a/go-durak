@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 
@@ -18,24 +19,23 @@ import (
 )
 
 var (
-	a     *app.App
-	id    uint
-	creds map[string]string
+	a        *app.App
+	id       uint
+	username string
+	password string
 )
 
 func setUp() {
-	creds = map[string]string{
-		"username": randomdata.SillyName(),
-		"password": randomdata.RandStringRunes(randomdata.Number(8, 32)),
-	}
+	username = randomdata.SillyName()
+	password = randomdata.RandStringRunes(randomdata.Number(8, 32))
 
-	hashed, err := argon2pw.GenerateSaltedHash(creds["password"])
+	hashed, err := argon2pw.GenerateSaltedHash(password)
 	if err != nil {
 		log.Panic(err)
 	}
 
 	qry := `insert into users (username, email, password) values ($1, $2, $3) returning id`
-	res := a.DB.QueryRow(qry, creds["username"], randomdata.Email(), hashed)
+	res := a.DB.QueryRow(qry, username, randomdata.Email(), hashed)
 	if err := res.Scan(&id); err != nil {
 		log.Panic(err)
 	}
@@ -55,46 +55,45 @@ func TestMain(m *testing.M) {
 	os.Exit(retCode)
 }
 
+func doLogin(t *testing.T, data map[string]string) *httptest.ResponseRecorder {
+	payload, err := json.Marshal(data)
+	assert.Nil(t, err)
+
+	req, err := http.NewRequest("POST", "/auth/login", bytes.NewBuffer(payload))
+	assert.Nil(t, err)
+
+	return utils.DispatchRequest(a.Router, req)
+}
+
 func TestLoginInvalidPayload(t *testing.T) {
-	data := []map[string]string{{}, {"username": "user"}, {"password": "secret"}}
+	data := []map[string]string{
+		{},
+		{"username": "user"},
+		{"password": "secret"},
+	}
+
 	for _, d := range data {
-		payload, err := json.Marshal(d)
-		assert.Nil(t, err)
+		res := doLogin(t, d)
 
-		req, err := http.NewRequest("POST", "/auth/login", bytes.NewBuffer(payload))
-		assert.Nil(t, err)
-
-		res := utils.DispatchRequest(a.Router, req)
 		assert.Equal(t, http.StatusBadRequest, res.Code)
-		// TODO: assert response text?
 	}
 }
 
 func TestLoginInvalidCredentials(t *testing.T) {
-	creds := map[string]string{
-		"username": creds["username"],
-		"password": "ubvakud",
-	}
+	res := doLogin(t, map[string]string{
+		"username": username,
+		"password": "INVALID",
+	})
 
-	payload, err := json.Marshal(creds)
-	assert.Nil(t, err)
-
-	req, err := http.NewRequest("POST", "/auth/login", bytes.NewBuffer(payload))
-	assert.Nil(t, err)
-
-	res := utils.DispatchRequest(a.Router, req)
 	assert.Equal(t, http.StatusUnauthorized, res.Code)
-	// TODO: assert response text?
 }
 
 func TestLoginValidCredentials(t *testing.T) {
-	payload, err := json.Marshal(creds)
-	assert.Nil(t, err)
+	res := doLogin(t, map[string]string{
+		"username": username,
+		"password": password,
+	})
 
-	req, err := http.NewRequest("POST", "/auth/login", bytes.NewBuffer(payload))
-	assert.Nil(t, err)
-
-	res := utils.DispatchRequest(a.Router, req)
 	assert.Equal(t, http.StatusOK, res.Code)
 	assert.NotEmpty(t, res.Body.String())
 
@@ -111,8 +110,8 @@ func TestLoginValidCredentials(t *testing.T) {
 	assert.NotEmpty(t, cookie.Value)
 
 	var count int
-	row := a.DB.QueryRow(`select count(*) from tokens where token = $1 and user_id = $2`,
-		cookie.Value, id)
+	qry := `select count(*) from tokens where token = $1 and user_id = $2`
+	row := a.DB.QueryRow(qry, cookie.Value, id)
 	assert.Nil(t, row.Scan(&count))
 	assert.Equal(t, 1, count)
 }
