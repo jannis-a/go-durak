@@ -55,87 +55,99 @@ func TestMain(m *testing.M) {
 	os.Exit(retCode)
 }
 
-func doLogin(t *testing.T, data map[string]string) *httptest.ResponseRecorder {
-	payload, err := json.Marshal(data)
-	assert.Nil(t, err)
+func TestLoginHandler(t *testing.T) {
+	testCases := []utils.ApiTestCase{{
+		"missing username and password",
+		map[string]string{},
+		http.StatusBadRequest,
+		nil,
+	}, {
+		"missing password",
+		map[string]string{"username": username},
+		http.StatusBadRequest,
+		nil,
+	}, {
+		"missing username",
+		map[string]string{"password": password},
+		http.StatusBadRequest,
+		nil,
+	}, {
+		"invalid credentials",
+		map[string]string{"username": username, "password": "INVALID"},
+		http.StatusUnauthorized,
+		nil,
+	}, {
+		"valid credentials",
+		map[string]string{"username": username, "password": password},
+		http.StatusOK,
+		func(t *testing.T, res *httptest.ResponseRecorder) {
+			// Assert non-empty response
+			access := res.Body.String()
+			assert.NotEmpty(t, access)
 
-	req, err := http.NewRequest("POST", "/auth/login", bytes.NewBuffer(payload))
-	assert.Nil(t, err)
+			// Check for refresh token cookie
+			var refresh string
+			for _, c := range res.Result().Cookies() {
+				if c.Name == auth.RefreshCookieName {
+					assert.NotEmpty(t, c.Value)
+					assert.True(t, c.HttpOnly)
+					refresh = c.Value
+					break
+				}
+			}
+			assert.NotEmpty(t, refresh)
 
-	return utils.DispatchRequest(a.Router, req)
+			// Check for refresh token in database
+			var count int
+			qry := `select count(*) from tokens where user_id = $1 and token = $2`
+			row := a.DB.QueryRow(qry, id, refresh)
+			assert.Nil(t, row.Scan(&count))
+			assert.Equal(t, 1, count)
+		},
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.Name, func(t *testing.T) {
+			data, err := json.Marshal(tc.Data)
+			assert.Nil(t, err)
+
+			req, err := http.NewRequest("POST", "/auth/login", bytes.NewBuffer(data))
+			assert.Nil(t, err)
+
+			res := utils.DispatchRequest(a.Router, req)
+			assert.Equal(t, tc.Code, res.Code)
+
+			if tc.Func != nil {
+				tc.Func(t, res)
+			}
+		})
+	}
 }
 
-func TestLoginInvalidPayload(t *testing.T) {
-	data := []map[string]string{
-		{},
-		{"username": "user"},
-		{"password": "secret"},
-	}
-
-	for _, d := range data {
-		res := doLogin(t, d)
-
-		assert.Equal(t, http.StatusBadRequest, res.Code)
-	}
-}
-
-func TestLoginInvalidCredentials(t *testing.T) {
-	res := doLogin(t, map[string]string{
-		"username": username,
-		"password": "INVALID",
+func TestRefreshHandler(t *testing.T) {
+	t.Run("missing cookie", func(t *testing.T) {
+		t.Fatal("Not implemented")
 	})
 
-	assert.Equal(t, http.StatusUnauthorized, res.Code)
-}
-
-func TestLoginValidCredentials(t *testing.T) {
-	res := doLogin(t, map[string]string{
-		"username": username,
-		"password": password,
+	t.Run("invalid token", func(t *testing.T) {
+		t.Fatal("Not implemented")
 	})
 
-	assert.Equal(t, http.StatusOK, res.Code)
-	assert.NotEmpty(t, res.Body.String())
-
-	var cookie http.Cookie
-	for _, c := range res.Result().Cookies() {
-		if c.Name == auth.RefreshCookieName {
-			cookie = *c
-			break
-		}
-	}
-
-	assert.NotNil(t, cookie)
-	assert.True(t, cookie.HttpOnly)
-	assert.NotEmpty(t, cookie.Value)
-
-	var count int
-	qry := `select count(*) from tokens where token = $1 and user_id = $2`
-	row := a.DB.QueryRow(qry, cookie.Value, id)
-	assert.Nil(t, row.Scan(&count))
-	assert.Equal(t, 1, count)
+	t.Run("valid token", func(t *testing.T) {
+		t.Fatal("Not implemented")
+	})
 }
 
-func TestRefreshMissingCookie(t *testing.T) {
-	t.Fatal("Not implemented")
-}
+func TestLogoutHandler(t *testing.T) {
+	t.Run("missing cookie", func(t *testing.T) {
+		t.Fatal("Not implemented")
+	})
 
-func TestRefreshInvalidToken(t *testing.T) {
-	t.Fatal("Not implemented")
-}
+	t.Run("invalid token", func(t *testing.T) {
+		t.Fatal("Not implemented")
+	})
 
-func TestRefreshValidToken(t *testing.T) {
-	t.Fatal("Not implemented")
-}
-
-func TestLogoutMissingCookie(t *testing.T) {
-	t.Fatal("Not implemented")
-}
-
-func TestLogoutInvalidToken(t *testing.T) {
-	t.Fatal("Not implemented")
-}
-
-func TestLogoutValidToken(t *testing.T) {
-	t.Fatal("Not implemented")
+	t.Run("valid token", func(t *testing.T) {
+		t.Fatal("Not implemented")
+	})
 }

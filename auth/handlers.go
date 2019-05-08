@@ -60,7 +60,7 @@ func LoginHandler(a *app.App, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create access token
-	access := createAccessToken(a, subject, creds.Username)
+	access := CreateAccessToken(a, subject, creds.Username)
 
 	// Response
 	http.SetCookie(w, &http.Cookie{
@@ -94,7 +94,7 @@ func RefreshHandler(a *app.App, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create access token
-	access := createAccessToken(a, subject, username)
+	access := CreateAccessToken(a, subject, username)
 
 	// Response
 	w.Write([]byte(access))
