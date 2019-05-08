@@ -55,7 +55,6 @@ func TestMain(m *testing.M) {
 	os.Exit(retCode)
 }
 
-
 func TestLoginHandler(t *testing.T) {
 	testCases := []utils.ApiTestCase{{
 		Name: "missing username and password",
@@ -135,7 +134,7 @@ func TestRefreshHandler(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			t.Fatal("Not implemented")
+			t.Error("Not implemented.")
 		})
 	}
 }
@@ -154,7 +153,7 @@ func TestLogoutHandler(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.Name, func(t *testing.T) {
-			t.Fatal("Not implemented")
+			t.Error("Not implemented.")
 		})
 	}
 }

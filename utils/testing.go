@@ -15,7 +15,7 @@ type ApiAssertFunc func(t *testing.T, res *httptest.ResponseRecorder)
 // status code of the response. Func the assert function for testing the response.
 type ApiTestCase struct {
 	Name string
-	Data map[string]string
+	Data interface{}
 	Code int
 	Func ApiAssertFunc
 }
