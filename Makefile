@@ -41,5 +41,12 @@ coverage-html: test-coverage
 	$(GOCMD) tool cover -html=$(COVERAGE)
 
 clean:
-	$(info Cleaning files...)
-	rm -rf $(OUTDIR) vendor
+	$(info Cleaning build files...)
+	rm -rf $(OUTDIR)
+
+clean-vendor:
+	$(info Cleaning vendor files...)
+	rm -rf $(OUTDIR)
+
+clean-all: clean clean-vendor
+
