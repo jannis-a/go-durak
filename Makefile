@@ -1,4 +1,5 @@
 OUTDIR = _output
+CONFIG = config.yml
 COVERAGE = $(OUTDIR)/.$$$$.cov
 
 GOPATH = $(shell go env GOPATH)
@@ -13,6 +14,9 @@ DOCKER_IMAGE = jannis-a/go-durak
 #
 output-dir:
 	mkdir -p $(OUTDIR)
+
+copy-config:
+	cp config-example.yml $(CONFIG)
 
 build: output-dir
 	$(info Building binaries...)
@@ -49,4 +53,4 @@ clean-vendor:
 	rm -rf $(OUTDIR)
 
 clean-all: clean clean-vendor
-
+	rm $(CONFIG)

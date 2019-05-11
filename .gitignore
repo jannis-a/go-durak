@@ -1,7 +1,7 @@
 /.idea/httpRequests
+/_output
 /vendor
 /config.yml
-/durak
 
 ### Go template
 # Binaries for programs and plugins
