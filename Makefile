@@ -10,7 +10,7 @@ GOCMD = $(GOFLAGS) go
 DOCKER_IMAGE = jannis-a/go-durak
 
 #
-# Helper targets
+# Helpers
 #
 output-dir:
 	mkdir -p $(OUTDIR)
@@ -18,6 +18,9 @@ output-dir:
 copy-config:
 	cp config-example.yml $(CONFIG)
 
+#
+# Build
+#
 build: output-dir
 	$(info Building binaries...)
 	$(GOCMD) list ./cmd/... | { cd $(OUTDIR) && $(GOFLAGS) xargs -n 1 -- go build -v; }
@@ -30,6 +33,9 @@ docker:
 	$(info Building docker container...)
 	docker build . -t $(DOCKER_IMAGE)
 
+#
+# Test and coverage
+#
 test:
 	$(info Running tests...)
 	$(GOCMD) test ./...
@@ -44,6 +50,9 @@ coverage: test-coverage
 coverage-html: test-coverage
 	$(GOCMD) tool cover -html=$(COVERAGE)
 
+#
+# Clean
+#
 clean:
 	$(info Cleaning build files...)
 	rm -rf $(OUTDIR)
