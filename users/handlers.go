@@ -1,10 +1,10 @@
 package users
 
 import (
-	"log"
 	"net/http"
 	"net/url"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/thedevsaddam/govalidator"
 
 	"github.com/jannis-a/go-durak/app"

@@ -3,7 +3,6 @@ package auth_test
 import (
 	"bytes"
 	"encoding/json"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -12,6 +11,7 @@ import (
 
 	"github.com/Pallinder/go-randomdata"
 	"github.com/raja/argon2pw"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/jannis-a/go-durak/app"

@@ -1,11 +1,11 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"os"
 
 	"github.com/gorilla/handlers"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/jannis-a/go-durak/app"
 	"github.com/jannis-a/go-durak/auth"

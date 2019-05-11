@@ -2,10 +2,10 @@ package users
 
 import (
 	"database/sql"
-	"log"
 	"time"
 
 	"github.com/raja/argon2pw"
+	log "github.com/sirupsen/logrus"
 )
 
 type UserPub struct {

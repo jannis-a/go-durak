@@ -2,9 +2,9 @@ package app
 
 import (
 	"database/sql"
-	"log"
 
 	_ "github.com/lib/pq"
+	log "github.com/sirupsen/logrus"
 )
 
 func NewDatabase(config *Config) *sql.DB {

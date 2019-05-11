@@ -1,13 +1,13 @@
 package auth
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/jannis-a/go-durak/app"
 )

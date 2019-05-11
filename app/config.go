@@ -2,8 +2,8 @@ package app
 
 import (
 	"fmt"
-	"log"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
 	"github.com/jannis-a/go-durak/utils"

@@ -4,10 +4,10 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/raja/argon2pw"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/jannis-a/go-durak/app"
 	"github.com/jannis-a/go-durak/utils"
