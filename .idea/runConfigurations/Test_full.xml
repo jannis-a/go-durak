@@ -1,13 +1,14 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Test:auth" type="GoTestRunConfiguration" factoryName="Go Test">
+  <configuration default="false" name="Test:full" type="GoTestRunConfiguration" factoryName="Go Test">
     <module name="go-durak" />
     <working_directory value="$PROJECT_DIR$/" />
     <go_parameters value="-i" />
     <framework value="gotest" />
-    <kind value="PACKAGE" />
-    <package value="github.com/jannis-a/go-durak/auth" />
-    <directory value="$PROJECT_DIR$/" />
+    <kind value="DIRECTORY" />
+    <package value="github.com/jannis-a/go-durak" />
+    <directory value="$PROJECT_DIR$" />
     <filePath value="$PROJECT_DIR$/" />
+    <pattern value="./..." />
     <method v="2" />
   </configuration>
 </component>
