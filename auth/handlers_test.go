@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/Pallinder/go-randomdata"
-	"github.com/raja/argon2pw"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
@@ -31,7 +30,7 @@ func setUp(t *testing.T) func(*testing.T) {
 	t.Log("Setup tables")
 
 	// Hash password
-	hashed, err := argon2pw.GenerateSaltedHash(password)
+	hashed, err := utils.Argon2Hash(password, a.Argon2Params)
 	if err != nil {
 		log.Panic(err)
 	}

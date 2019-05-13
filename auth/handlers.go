@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/raja/argon2pw"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/jannis-a/go-durak/app"
@@ -39,8 +38,8 @@ func LoginHandler(a *app.App, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate credentials
-	valid, err := argon2pw.CompareHashWithPassword(password, creds.Password)
+	// Validate credential
+	valid, err := utils.Argon2Verify(creds.Password, password) // , creds.Password)
 	if err != nil || !valid {
 		utils.HttpError(w, http.StatusUnauthorized, "")
 		return

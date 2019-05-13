@@ -121,14 +121,6 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:c2a0c688ef476a54b1c93f973fc6c282c93254c446e637ccf9686932297bf264"
-  name = "github.com/raja/argon2pw"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "ba25963e18dd4ecc5617a5676eb53ba924c00351"
-  version = "1.1.0"
-
-[[projects]]
   digest = "1:fd61cf4ae1953d55df708acb6b91492d538f49c305b364a014049914495db426"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
@@ -249,11 +241,11 @@
     "github.com/gorilla/handlers",
     "github.com/gorilla/mux",
     "github.com/lib/pq",
-    "github.com/raja/argon2pw",
     "github.com/sirupsen/logrus",
     "github.com/spf13/viper",
     "github.com/stretchr/testify/assert",
     "github.com/thedevsaddam/govalidator",
+    "golang.org/x/crypto/argon2",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

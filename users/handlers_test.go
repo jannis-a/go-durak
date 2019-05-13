@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/Pallinder/go-randomdata"
-	"github.com/raja/argon2pw"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/jannis-a/go-durak/app"
@@ -25,7 +24,8 @@ func truncateTable() {
 }
 
 func createUser() users.User {
-	return users.New(a.DB, randomdata.SillyName(), randomdata.Email(), "secret")
+	hashed, _ := utils.Argon2Hash("secret", a.Argon2Params)
+	return users.New(a.DB, randomdata.SillyName(), randomdata.Email(), hashed)
 }
 
 func createUserPub() users.UserPub {
@@ -104,7 +104,7 @@ func TestCreate(t *testing.T) {
 	)
 	assert.Equal(t, data["username"], user.Username)
 	assert.Equal(t, data["email"], user.Email)
-	result, err := argon2pw.CompareHashWithPassword(user.Password, data["password"])
+	result, err := utils.Argon2Verify(data["password"], user.Password)
 	assert.Nil(t, err)
 	assert.True(t, result)
 	assert.Equal(t, expected, res.Body.String())
