@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 
@@ -18,14 +19,11 @@ func main() {
 	a.RegisterApi("auth", auth.Routes)
 	a.RegisterApi("users", users.Routes)
 
-	// Display all available routes
-	err := a.Router.Walk(app.Walk)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// Display bind address and all available routes
+	fmt.Println("Listening on", a.Config.BIND)
+	a.WalkRoutes()
 
 	// Serve routes
 	handler := handlers.LoggingHandler(os.Stdout, a.Router)
-	log.Println("listening on", a.Config.BIND)
 	log.Fatal(http.ListenAndServe(a.Config.BIND, handler))
 }

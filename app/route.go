@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 )
 
 type Route struct {
@@ -25,17 +26,24 @@ func (a *App) RegisterApi(prefix string, routes []Route) {
 	}
 }
 
-func Walk(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
-	methods, err := route.GetMethods()
-	if err != nil {
+func (a *App) WalkRoutes() {
+	walkFunc := func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+		methods, err := route.GetMethods()
+		if err != nil {
+			return nil
+		}
+
+		path, err := route.GetPathTemplate()
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(methods, route.GetName(), path)
 		return nil
 	}
 
-	path, err := route.GetPathTemplate()
+	err := a.Router.Walk(walkFunc)
 	if err != nil {
-		return err
+		log.Error(err)
 	}
-
-	fmt.Println(methods, route.GetName(), path)
-	return nil
 }
