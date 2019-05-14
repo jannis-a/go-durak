@@ -1,9 +1,11 @@
 package app
 
 import (
-	"fmt"
+	"os"
+	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/olekukonko/tablewriter"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -27,6 +29,11 @@ func (a *App) RegisterApi(prefix string, routes []Route) {
 }
 
 func (a *App) WalkRoutes() {
+	routes := tablewriter.NewWriter(os.Stdout)
+	routes.SetHeader([]string{"methods", "name", "path"})
+	routes.SetAlignment(tablewriter.ALIGN_LEFT)
+	routes.SetBorder(false)
+
 	walkFunc := func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 		methods, err := route.GetMethods()
 		if err != nil {
@@ -38,12 +45,14 @@ func (a *App) WalkRoutes() {
 			return err
 		}
 
-		fmt.Println(methods, route.GetName(), path)
+		routes.Append([]string{strings.Join(methods, ","), route.GetName(), path})
 		return nil
 	}
 
 	err := a.Router.Walk(walkFunc)
 	if err != nil {
 		log.Error(err)
+	} else {
+		routes.Render()
 	}
 }
