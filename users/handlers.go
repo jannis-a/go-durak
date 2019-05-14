@@ -38,9 +38,9 @@ func ListHandler(a *app.App, w http.ResponseWriter, r *http.Request) {
 
 func CreateHandler(a *app.App, w http.ResponseWriter, r *http.Request) {
 	var (
-		data        UserCreate
-		cntUsername int
-		cntEmail    int
+		data           UserCreate
+		usernameExists bool
+		emailExists    bool
 	)
 
 	err := json.NewDecoder(r.Body).Decode(&data)
@@ -51,14 +51,15 @@ func CreateHandler(a *app.App, w http.ResponseWriter, r *http.Request) {
 
 	e := make(url.Values)
 
-	row := a.DB.QueryRow(`select
+	qry := `select
 		max(case when username = $1 then 1 else 0 end),
 	  max(case when email = $2 then 1 else 0 end)
-	from users`, data.Username, data.Email)
-	_ = row.Scan(&cntUsername, &cntEmail)
+	from users`
+	row := a.DB.QueryRow(qry, data.Username, data.Email)
+	_ = row.Scan(&usernameExists, &emailExists)
 
 	if 3 > len(data.Username) || 50 < len(data.Username) {
-		e.Add("username", "Length must be between 3 and 50")
+		e.Add("username", "Username length must be between 3 and 50")
 	}
 
 	// TODO: assert email valid
@@ -69,11 +70,11 @@ func CreateHandler(a *app.App, w http.ResponseWriter, r *http.Request) {
 
 	// TODO: password rules
 
-	if 0 < cntUsername {
+	if usernameExists {
 		e.Add("username", "Username already taken")
 	}
 
-	if 0 < cntEmail {
+	if emailExists {
 		e.Add("email", "Email already taken")
 	}
 
