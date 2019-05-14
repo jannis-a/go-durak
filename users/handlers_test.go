@@ -20,7 +20,8 @@ import (
 var a *app.App
 
 func truncateTable() {
-	_, _ = a.DB.Exec(`TRUNCATE TABLE users CASCADE`)
+	_, _ = a.DB.Exec(`truncate table users cascade;
+                          alter sequence users_id_seq restart;`)
 }
 
 func createUser() users.User {
@@ -91,7 +92,7 @@ func TestCreate(t *testing.T) {
 	res := utils.DispatchRequest(a.Router, req)
 	assert.Equal(t, http.StatusCreated, res.Code)
 
-	row := a.DB.QueryRow(`SELECT * FROM users WHERE username = $1`, data["username"])
+	row := a.DB.QueryRow(`select * from users where username = $1`, data["username"])
 	var user users.User
 	err = row.Scan(&user.Id, &user.Username, &user.Email, &user.Password, &user.JoinedAt)
 	assert.Nil(t, err)
