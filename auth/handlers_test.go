@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/Pallinder/go-randomdata"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/jannis-a/go-durak/app"
@@ -32,7 +31,7 @@ func setUp(t *testing.T) func(*testing.T) {
 	// Hash password
 	hashed, err := utils.Argon2Hash(password, a.Argon2Params)
 	if err != nil {
-		log.Panic(err)
+		panic(err)
 	}
 
 	// Create user
