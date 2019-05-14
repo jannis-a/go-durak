@@ -5,7 +5,6 @@ go 1.12
 require (
 	github.com/Pallinder/go-randomdata v1.1.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/golang-migrate/migrate/v4 v4.3.1 // indirect
 	github.com/gorilla/handlers v1.4.0
 	github.com/gorilla/mux v1.7.1
 	github.com/lib/pq v1.1.1
