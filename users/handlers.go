@@ -1,11 +1,11 @@
 package users
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/url"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/thedevsaddam/govalidator"
 
 	"github.com/jannis-a/go-durak/app"
 	"github.com/jannis-a/go-durak/utils"
@@ -37,52 +37,57 @@ func ListHandler(a *app.App, w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateHandler(a *app.App, w http.ResponseWriter, r *http.Request) {
-	d := make(map[string]string)
-	v := govalidator.New(govalidator.Options{
-		Request:         r,
-		Data:            &d,
-		RequiredDefault: true,
-		Rules: govalidator.MapData{
-			"username":         []string{"required", "min:3", "max:50"},
-			"email":            []string{"required", "email"},
-			"password":         []string{"required"},
-			"password_confirm": []string{"required"},
-		},
-	})
-	e := v.ValidateJSON()
+	var (
+		data        UserCreate
+		cntUsername int
+		cntEmail    int
+	)
 
-	if d["password"] != d["password_confirm"] {
-		e.Add("password", "PW MISSMATCH")
-	}
-
-	var count int
-
-	// row := a.DB.QueryRow(`select
-	// 	max(case when username = $1 then 1 else 0 end),
-	//   max(case when email = $2 then 1 else 0 end)
-	// from users`, d["username"], d["email"])
-
-	row := a.DB.QueryRow(`select * from users where username = $1`, d["username"])
-	if _ = row.Scan(count); 0 < count {
-		e.Add("username", "USERNAME ALREADY TAKEN")
-	}
-
-	row = a.DB.QueryRow(`select * from users where email = $1`, d["email"])
-	if _ = row.Scan(count); 0 < count {
-		e.Add("email", "EMAIL ALREADY TAKEN")
-	}
-
-	if 0 < len(e) {
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		utils.RenderJson(w, map[string]url.Values{"errors": e})
+	err := json.NewDecoder(r.Body).Decode(&data)
+	if err != nil {
+		utils.HttpError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	hashed, err := utils.Argon2Hash(d["password"], a.Argon2Params)
+	e := make(url.Values)
+
+	row := a.DB.QueryRow(`select
+		max(case when username = $1 then 1 else 0 end),
+	  max(case when email = $2 then 1 else 0 end)
+	from users`, data.Username, data.Email)
+	_ = row.Scan(&cntUsername, &cntEmail)
+
+	if 3 > len(data.Username) || 50 < len(data.Username) {
+		e.Add("username", "Length must be between 3 and 50")
+	}
+
+	// TODO: assert email valid
+
+	if data.Password != data.PasswordConfirm {
+		e.Add("password", "Passwords don't match")
+	}
+
+	// TODO: password rules
+
+	if 0 < cntUsername {
+		e.Add("username", "Username already taken")
+	}
+
+	if 0 < cntEmail {
+		e.Add("email", "Email already taken")
+	}
+
+	if 0 < len(e) {
+		utils.RenderErrors(w, e)
+		return
+	}
+
+	hashed, err := utils.Argon2Hash(data.Password, a.Argon2Params)
 	if err != nil {
 		log.Panic(err)
 	}
-	user := New(a.DB, d["username"], d["email"], hashed)
+	user := New(a.DB, data.Username, data.Email, hashed)
+
 	w.WriteHeader(http.StatusCreated)
 	utils.RenderJson(w, user)
 }
