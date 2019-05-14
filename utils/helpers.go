@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"go/build"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -49,6 +50,11 @@ func GenerateRandomBytes(n uint32) ([]byte, error) {
 	}
 
 	return b, nil
+}
+
+func RenderErrors(w http.ResponseWriter, ae url.Values) {
+	w.WriteHeader(http.StatusUnprocessableEntity)
+	RenderJson(w, map[string]url.Values{"errors": ae})
 }
 
 func RenderJson(w http.ResponseWriter, value interface{}) {
