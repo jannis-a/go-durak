@@ -17,6 +17,13 @@ type User struct {
 	Password string `json:"-"`
 }
 
+type UserCreate struct {
+	Username        string `json:"username"`
+	Email           string `json:"email"`
+	Password        string `json:"password"`
+	PasswordConfirm string `json:"password_confirm"`
+}
+
 func New(db *sql.DB, username string, email string, password string) User {
 	var user User
 	qry := `insert into users (username, email, password) values ($1, $2, $3) returning id, username, email, joined_at`
