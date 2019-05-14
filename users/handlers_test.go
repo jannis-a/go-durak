@@ -93,7 +93,7 @@ func TestCreate(t *testing.T) {
 
 	row := a.DB.QueryRow(`SELECT * FROM users WHERE username = $1`, data["username"])
 	var user users.User
-	err = row.Scan(&user.Id, &user.Username, &user.Email, &user.JoinedAt)
+	err = row.Scan(&user.Id, &user.Username, &user.Email, &user.Password, &user.JoinedAt)
 	assert.Nil(t, err)
 
 	expected := fmt.Sprintf(`{"id":%d,"username":"%s","joined_at":"%s","email":"%s"}`,
