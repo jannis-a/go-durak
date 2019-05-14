@@ -19,9 +19,15 @@ import (
 
 var a *app.App
 
-func truncateTable() {
-	_, _ = a.DB.Exec(`truncate table users cascade;
-                          alter sequence users_id_seq restart;`)
+func setUp(t *testing.T) func(*testing.T) {
+	t.Log("Setup tables")
+
+	return func(t *testing.T) {
+		t.Log("Teardown tables")
+
+		a.DB.Exec(`truncate table users cascade;
+                     alter sequence users_id_seq restart;`)
+	}
 }
 
 func createUser() users.User {
@@ -30,36 +36,61 @@ func createUser() users.User {
 
 func createUserPub() users.UserPub {
 	user := createUser()
-	return users.UserPub{user.Id, user.Username, user.JoinedAt}
+	return users.UserPub{
+		Id:       user.Id,
+		Username: user.Username,
+		JoinedAt: user.JoinedAt,
+	}
 }
 
 func TestMain(m *testing.M) {
 	a = app.NewApp()
 	a.RegisterApi("users", users.Routes)
 
-	truncateTable()
-	code := m.Run()
-	truncateTable()
-	os.Exit(code)
+	os.Exit(m.Run())
 }
 
 func TestList(t *testing.T) {
-	expected := []users.UserPub{createUserPub()}
+	testCases := []struct {
+		have int
+		want int
+	}{
+		{0, 0},
+		{1, 1},
+		{10, 10},
+		{11, 10},
+	}
 
-	req, err := http.NewRequest("GET", "/users", nil)
-	assert.Nil(t, err)
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("size %d", tc.have), func(t *testing.T) {
+			tearDown := setUp(t)
+			defer tearDown(t)
 
-	res := utils.DispatchRequest(a.Router, req)
-	assert.Equal(t, http.StatusOK, res.Code)
+			expected := make([]users.UserPub, 0)
+			for i := 0; i < tc.have; i++ {
+				expected = append(expected, createUserPub())
+			}
+			assert.Len(t, expected, tc.have)
 
-	var result []users.UserPub
-	err = json.Unmarshal(res.Body.Bytes(), &result)
+			req, err := http.NewRequest("GET", "/users", nil)
+			assert.Nil(t, err)
 
-	assert.Nil(t, err)
-	assert.Equal(t, expected, result)
+			res := utils.DispatchRequest(a.Router, req)
+			assert.Equal(t, http.StatusOK, res.Code)
+
+			var result []users.UserPub
+			err = json.Unmarshal(res.Body.Bytes(), &result)
+
+			assert.Nil(t, err)
+			assert.Len(t, result, tc.want)
+		})
+	}
 }
 
 func TestDetail(t *testing.T) {
+	tearDown := setUp(t)
+	defer tearDown(t)
+
 	expected := createUserPub()
 
 	req, err := http.NewRequest("GET", "/users/"+expected.Username, nil)
@@ -76,6 +107,9 @@ func TestDetail(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
+	tearDown := setUp(t)
+	defer tearDown(t)
+
 	data := map[string]string{
 		"username":         randomdata.SillyName(),
 		"email":            randomdata.Email(),
