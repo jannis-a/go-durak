@@ -1,8 +1,11 @@
 package users
 
 import (
-	"database/sql"
+	"log"
 	"time"
+
+	"github.com/jannis-a/go-durak/app"
+	"github.com/jannis-a/go-durak/utils"
 )
 
 type UserPub struct {
@@ -24,13 +27,24 @@ type UserCreate struct {
 	PasswordConfirm string `json:"password_confirm"`
 }
 
-func New(db *sql.DB, username string, email string, password string) User {
-	var user User
-	qry := `insert into users (username, email, password) values ($1, $2, $3) returning id, username, email, joined_at`
-	res := db.QueryRow(qry, username, email, password)
-	err := res.Scan(&user.Id, &user.Username, &user.Email, &user.JoinedAt)
+func New(a *app.App, username string, email string, password string) User {
+	// Hash the password
+	hashedPassword, err := utils.Argon2Hash(password, a.Argon2Params)
 	if err != nil {
-		println(err.Error())
+		log.Panic(err)
 	}
+
+	// Insert data into database
+	qry := `insert into users (username, email, password) values ($1, $2, $3) 
+          returning id, username, email, joined_at`
+	res := a.DB.QueryRow(qry, username, email, hashedPassword)
+
+	// Scan result of insert into struct
+	var user User
+	err = res.Scan(&user.Id, &user.Username, &user.Email, &user.JoinedAt)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return user
 }

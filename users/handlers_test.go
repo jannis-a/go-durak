@@ -25,8 +25,7 @@ func truncateTable() {
 }
 
 func createUser() users.User {
-	hashed, _ := utils.Argon2Hash("secret", a.Argon2Params)
-	return users.New(a.DB, randomdata.SillyName(), randomdata.Email(), hashed)
+	return users.New(a, randomdata.SillyName(), randomdata.Email(), "secret")
 }
 
 func createUserPub() users.UserPub {

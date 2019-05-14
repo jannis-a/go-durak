@@ -82,11 +82,7 @@ func CreateHandler(a *app.App, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hashed, err := utils.Argon2Hash(data.Password, a.Argon2Params)
-	if err != nil {
-		log.Panic(err)
-	}
-	user := New(a.DB, data.Username, data.Email, hashed)
+	user := New(a, data.Username, data.Email, data.Password)
 
 	w.WriteHeader(http.StatusCreated)
 	utils.RenderJson(w, user)
