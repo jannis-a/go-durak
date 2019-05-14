@@ -3,8 +3,8 @@ CONFIG = config.yml
 COVERAGE = $(OUTDIR)/.$$$$.cov
 
 GOPATH = $(shell go env GOPATH)
-GOFLAGS = GOPATH=$(GOPATH) GOBIN=$(OUTDIR)
-GOFLAGS_PROD = GOPATH=$(GOPATH) CGO_ENABLED=0 GOOS=linux GOARCH=amd64
+GOFLAGS = GOPATH=$(GOPATH) GOBIN=$(OUTDIR) GO111MODULE=on
+GOFLAGS_PROD = GOPATH=$(GOPATH) CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on
 GOCMD = $(GOFLAGS) go
 
 DOCKER_IMAGE = jannis-a/go-durak
@@ -26,7 +26,7 @@ build: output-dir
 	$(GOCMD) list ./cmd/... | { cd $(OUTDIR) && $(GOFLAGS) xargs -n 1 -- go build -v; }
 
 build-prod: output-dir # TODO: test
-	$(info Building release binaries...)
+	$(info Building production binaries...)
 	$(GOCMD) list ./cmd/... | { cd $(OUTDIR) && $(GOFLAGS_PROD) xargs -n 1 -- go build -v; }
 
 docker:

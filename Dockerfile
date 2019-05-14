@@ -5,9 +5,7 @@ FROM golang:1.12-alpine3.9 AS builder
 ARG workdir
 WORKDIR ${workdir}
 COPY . .
-RUN apk --no-cache add git make
-RUN go get -u github.com/golang/dep/cmd/dep
-RUN dep ensure
+RUN apk --no-cache add build-base git
 RUN make build-prod
 
 FROM scratch
