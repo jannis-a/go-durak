@@ -57,9 +57,5 @@ clean:
 	$(info Cleaning build files...)
 	rm -rf $(OUTDIR)
 
-clean-vendor:
-	$(info Cleaning vendor files...)
-	rm -rf $(OUTDIR)
-
-clean-all: clean clean-vendor
+clean-all: clean
 	rm $(CONFIG)
