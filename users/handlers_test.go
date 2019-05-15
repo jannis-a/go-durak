@@ -54,11 +54,14 @@ func TestList(t *testing.T) {
 	testCases := []struct {
 		have int
 		want int
+		page int
 	}{
-		{0, 0},
-		{1, 1},
-		{10, 10},
-		{11, 10},
+		{0, 0, 0},
+		{1, 1, 0},
+		{10, 10, 0},
+		{11, 10, 0},
+		{11, 1, 2},
+		{20, 10, 2},
 	}
 
 	for _, tc := range testCases {
@@ -72,7 +75,13 @@ func TestList(t *testing.T) {
 			}
 			assert.Len(t, expected, tc.have)
 
-			req, err := http.NewRequest("GET", "/users", nil)
+			url := "/users"
+			if tc.page > 0 {
+				url = fmt.Sprintf("%s?page=%d", url, tc.page)
+			}
+
+			println("### ", url)
+			req, err := http.NewRequest("GET", url, nil)
 			assert.Nil(t, err)
 
 			res := utils.DispatchRequest(a.Router, req)

@@ -14,17 +14,22 @@ type Route struct {
 	Method  string
 	Path    string
 	Handler HandlerFunc
+	Query   []string
 }
 
 func (a *App) RegisterApi(prefix string, routes []Route) {
 	router := a.Router.PathPrefix("/" + prefix).Subrouter()
 
 	for _, r := range routes {
-		router.
+		route := router.
 			Name(prefix + ":" + r.Name).
 			Methods(r.Method).
 			Path(r.Path).
 			Handler(Handler{a, r.Handler})
+
+		if len(r.Query) > 0 {
+			route.Queries(r.Query...)
+		}
 	}
 }
 

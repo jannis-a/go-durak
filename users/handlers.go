@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 
@@ -12,7 +13,13 @@ import (
 )
 
 func ListHandler(a *app.App, w http.ResponseWriter, r *http.Request) {
-	rows, err := a.DB.Query(`select id, username, joined_at from users`)
+	page, err := strconv.Atoi(r.FormValue("page"))
+	if err != nil {
+		page = 1
+	}
+
+	qry := `select id, username, joined_at from users limit 10 offset $1`
+	rows, err := a.DB.Query(qry, (page-1)*10)
 	if err != nil {
 		log.Fatal(err)
 	}

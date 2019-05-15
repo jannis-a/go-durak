@@ -5,7 +5,7 @@ import (
 )
 
 var Routes = []app.Route{
-	{"login", "POST", "/login", LoginHandler},
-	{"refresh", "GET", "/refresh", RefreshHandler},
-	{"logout", "POST", "/logout", LogoutHandler},
+	{Name: "login", Method: "POST", Path: "/login", Handler: LoginHandler},
+	{Name: "refresh", Method: "GET", Path: "/refresh", Handler: RefreshHandler},
+	{Name: "logout", Method: "POST", Path: "/logout", Handler: LogoutHandler},
 }
