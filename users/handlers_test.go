@@ -69,7 +69,7 @@ func TestList(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("size %d", tc.have), func(t *testing.T) {
+		t.Run(fmt.Sprintf("size=%d_page=%d", tc.have, tc.page), func(t *testing.T) {
 			tearDown := setUp(t)
 			defer tearDown(t)
 
