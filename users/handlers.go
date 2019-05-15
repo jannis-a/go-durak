@@ -13,13 +13,20 @@ import (
 )
 
 func ListHandler(a *app.App, w http.ResponseWriter, r *http.Request) {
-	page, err := strconv.Atoi(r.FormValue("page"))
+	query := r.URL.Query()
+
+	size, err := strconv.Atoi(query.Get("size"))
+	if err != nil {
+		size = 10
+	}
+
+	page, err := strconv.Atoi(query.Get("page"))
 	if err != nil {
 		page = 1
 	}
 
-	qry := `select id, username, joined_at from users limit 10 offset $1`
-	rows, err := a.DB.Query(qry, (page-1)*10)
+	qry := `select id, username, joined_at from users limit $1 offset $2`
+	rows, err := a.DB.Query(qry, size, size*(page-1))
 	if err != nil {
 		log.Fatal(err)
 	}

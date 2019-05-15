@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/Pallinder/go-randomdata"
@@ -56,35 +58,39 @@ func TestMain(m *testing.M) {
 
 func TestList(t *testing.T) {
 	testCases := []struct {
-		have int
 		want int
 		page int
+		size int
 	}{
-		{0, 0, 0},
-		{1, 1, 0},
-		{10, 10, 0},
-		{11, 10, 0},
-		{11, 1, 2},
-		{20, 10, 2},
+		{10, 0, 0},
+		{10, 1, 0},
+		{5, 3, 0},
+		{8, 0, 8},
+		{1, 4, 8},
+	}
+
+	tearDown := setUp(t)
+	defer tearDown(t)
+
+	expected := make([]users.UserPub, 0)
+	for i := 0; i < 25; i++ {
+		expected = append(expected, createUserPub())
 	}
 
 	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("size=%d_page=%d", tc.have, tc.page), func(t *testing.T) {
-			tearDown := setUp(t)
-			defer tearDown(t)
+		tcName := fmt.Sprintf("want=%d_page=%d_size=%d", tc.want, tc.page, tc.page)
+		t.Run(tcName, func(t *testing.T) {
 
-			expected := make([]users.UserPub, 0)
-			for i := 0; i < tc.have; i++ {
-				expected = append(expected, createUserPub())
-			}
-			assert.Len(t, expected, tc.have)
-
-			url := "/users"
-			if tc.page > 0 {
-				url = fmt.Sprintf("%s?page=%d", url, tc.page)
+			params := make(url.Values)
+			if 0 < tc.page {
+				params.Add("page", strconv.Itoa(tc.page))
 			}
 
-			req, err := http.NewRequest("GET", url, nil)
+			if 0 < tc.size {
+				params.Add("size", strconv.Itoa(tc.size))
+			}
+
+			req, err := http.NewRequest("GET", "/users?"+params.Encode(), nil)
 			assert.Nil(t, err)
 
 			res := utils.DispatchRequest(a.Router, req)
