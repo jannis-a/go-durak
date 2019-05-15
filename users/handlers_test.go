@@ -85,7 +85,6 @@ func TestList(t *testing.T) {
 				url = fmt.Sprintf("%s?page=%d", url, tc.page)
 			}
 
-			println("### ", url)
 			req, err := http.NewRequest("GET", url, nil)
 			assert.Nil(t, err)
 
