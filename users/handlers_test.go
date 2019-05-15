@@ -19,14 +19,18 @@ import (
 
 var a *app.App
 
+func truncateTables() {
+	a.DB.Exec(`truncate table users cascade;
+                   alter sequence users_id_seq restart;`)
+}
+
 func setUp(t *testing.T) func(*testing.T) {
 	t.Log("Setup tables")
 
 	return func(t *testing.T) {
 		t.Log("Teardown tables")
 
-		a.DB.Exec(`truncate table users cascade;
-                     alter sequence users_id_seq restart;`)
+		truncateTables()
 	}
 }
 
@@ -47,6 +51,7 @@ func TestMain(m *testing.M) {
 	a = app.NewApp()
 	a.RegisterApi("users", users.Routes)
 
+	truncateTables()
 	os.Exit(m.Run())
 }
 
