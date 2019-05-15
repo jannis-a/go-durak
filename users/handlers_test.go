@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/Pallinder/go-randomdata"
 	"github.com/stretchr/testify/assert"
@@ -114,9 +113,11 @@ func TestDetail(t *testing.T) {
 
 	var result users.UserPub
 	err = json.Unmarshal(res.Body.Bytes(), &result)
-
 	assert.Nil(t, err)
-	assert.Equal(t, expected, result)
+
+	assert.Equal(t, expected.Id, result.Id)
+	assert.Equal(t, expected.Username, result.Username)
+	assert.True(t, expected.JoinedAt.Equal(result.JoinedAt))
 }
 
 func TestCreate(t *testing.T) {
@@ -138,21 +139,15 @@ func TestCreate(t *testing.T) {
 	res := utils.DispatchRequest(a.Router, req)
 	assert.Equal(t, http.StatusCreated, res.Code)
 
+	var result users.User
 	row := a.DB.QueryRow(`select * from users where username = $1`, data["username"])
-	var user users.User
-	err = row.Scan(&user.Id, &user.Username, &user.Email, &user.Password, &user.JoinedAt)
+	err = row.Scan(&result.Id, &result.Username, &result.Email, &result.Password, &result.JoinedAt)
 	assert.Nil(t, err)
 
-	expected := fmt.Sprintf(`{"id":%d,"username":"%s","joined_at":"%s","email":"%s"}`,
-		user.Id,
-		user.Username,
-		user.JoinedAt.Format(time.RFC3339Nano),
-		user.Email,
-	)
-	assert.Equal(t, data["username"], user.Username)
-	assert.Equal(t, data["email"], user.Email)
-	result, err := utils.Argon2Verify(data["password"], user.Password)
+	assert.Equal(t, data["username"], result.Username)
+	assert.Equal(t, data["email"], result.Email)
+
+	verified, err := utils.Argon2Verify(data["password"], result.Password)
 	assert.Nil(t, err)
-	assert.True(t, result)
-	assert.Equal(t, expected, res.Body.String())
+	assert.True(t, verified)
 }
