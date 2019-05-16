@@ -1,6 +1,6 @@
 OUTDIR = _output
 CONFIG = config.yml
-COVERAGE = $(OUTDIR)/.$$$$.cov
+COVERAGE = coverage.out
 
 GOPATH = $(shell go env GOPATH)
 GOFLAGS = GOPATH=$(GOPATH) GOBIN=$(OUTDIR) GO111MODULE=on
@@ -40,14 +40,13 @@ test:
 	$(info Running tests...)
 	$(GOCMD) test ./...
 
-test-coverage: output-dir
+test-coverage:
 	$(info Running tests with coverage...)
-	$(GOCMD) test -coverprofile=$(COVERAGE) ./...
+	$(GOCMD) test -cover -race ./...
 
-coverage: test-coverage
-	$(GOCMD) tool cover -func=$(COVERAGE)
-
-coverage-html: test-coverage
+test-coverage-html:
+	$(info Running tests with html coverage...)
+	$(GOCMD) test -coverprofile=$(COVERAGE) -race ./...
 	$(GOCMD) tool cover -html=$(COVERAGE)
 
 #
@@ -55,7 +54,7 @@ coverage-html: test-coverage
 #
 clean:
 	$(info Cleaning build files...)
-	rm -rf $(OUTDIR)
+	rm -rf $(COVERAGE) $(OUTDIR)
 
 clean-all: clean
 	rm $(CONFIG)
