@@ -5,13 +5,24 @@ import (
 	"encoding/json"
 	"go/build"
 	"net/http"
-	"net/url"
 	"os"
 	"path"
 	"strings"
 
 	"github.com/gorilla/mux"
 )
+
+type ApiError map[string][]string
+
+func (ae ApiError) Add(name string, messages ...string) {
+	if _, ok := ae[name]; !ok {
+		ae[name] = make([]string, 0)
+	}
+
+	for _, m := range messages {
+		ae.Add(name, m)
+	}
+}
 
 func GetPackagePath() string {
 	gopath := os.Getenv("GOPATH")
@@ -52,9 +63,9 @@ func GenerateRandomBytes(n uint32) ([]byte, error) {
 	return b, nil
 }
 
-func RenderErrors(w http.ResponseWriter, ae url.Values) {
+func RenderErrors(w http.ResponseWriter, ae ApiError) {
 	w.WriteHeader(http.StatusUnprocessableEntity)
-	RenderJson(w, map[string]url.Values{"errors": ae})
+	RenderJson(w, map[string]ApiError{"errors": ae})
 }
 
 func RenderJson(w http.ResponseWriter, value interface{}) {
